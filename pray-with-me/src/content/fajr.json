@@ -1,0 +1,76 @@
+{
+  "_note": "Draft content for one rakah of Fajr. The content teammate completes the TODO fields (sources, transliteration, meaning, audio) and has everything Sharia-reviewed before release. Do not invent hadith numbers or sources.",
+  "prayer": "fajr",
+  "steps": [
+    {
+      "id": "takbir",
+      "type": "guided",
+      "title": { "ar": "تكبيرة الإحرام", "en": "Opening Takbir" },
+      "instruction": {
+        "en": "Stand facing the qibla. Raise both hands to the level of your ears or shoulders and say:"
+      },
+      "dhikr": {
+        "arabic": "الله أكبر",
+        "transliteration": "Allāhu Akbar",
+        "meaning": { "en": "Allah is the Greatest" },
+        "audio": ""
+      },
+      "source": "TODO"
+    },
+    {
+      "id": "standing",
+      "type": "pose",
+      "check": "standing",
+      "title": { "ar": "القيام", "en": "Standing (Qiyam)" },
+      "instruction": {
+        "en": "Stand upright, facing forward. Place your right hand over your left hand on your chest."
+      },
+      "source": "TODO"
+    },
+    {
+      "id": "fatiha",
+      "type": "speech",
+      "title": { "ar": "قراءة الفاتحة", "en": "Reciting Al-Fatihah" },
+      "instruction": {
+        "en": "While standing, recite Surat Al-Fatihah from beginning to end."
+      },
+      "reference": "الحمد لله رب العالمين الرحمن الرحيم مالك يوم الدين اياك نعبد واياك نستعين اهدنا الصراط المستقيم صراط الذين انعمت عليهم غير المغضوب عليهم ولا الضالين",
+      "transliteration": "TODO",
+      "meaning": "TODO",
+      "audio": "TODO",
+      "source": "TODO"
+    },
+    {
+      "id": "ruku",
+      "type": "pose",
+      "check": "ruku",
+      "title": { "ar": "الركوع", "en": "Bowing (Ruku)" },
+      "instruction": {
+        "en": "Bow down with your back straight and level with the floor, and your hands on your knees. Then say:"
+      },
+      "dhikr": {
+        "arabic": "سبحان ربي العظيم",
+        "transliteration": "Subḥāna rabbiyal-ʿaẓīm",
+        "meaning": { "en": "Glory be to my Lord, the Most Great" },
+        "audio": ""
+      },
+      "source": "TODO"
+    },
+    {
+      "id": "sujood",
+      "type": "pose",
+      "check": "sujood",
+      "title": { "ar": "السجود", "en": "Prostration (Sujood)" },
+      "instruction": {
+        "en": "Prostrate with your forehead, nose, palms, knees and toes on the ground. Then say:"
+      },
+      "dhikr": {
+        "arabic": "سبحان ربي الأعلى",
+        "transliteration": "Subḥāna rabbiyal-aʿlā",
+        "meaning": { "en": "Glory be to my Lord, the Most High" },
+        "audio": ""
+      },
+      "source": "TODO"
+    }
+  ]
+}

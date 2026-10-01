@@ -1,0 +1,109 @@
+/* Simple first theme. The UX teammate owns and will restyle this file.
+   Colors live in the variables below — change them here, not inline. */
+:root {
+  --bg: #0f1440;
+  --card: #1a2060;
+  --text: #f2f2ff;
+  --muted: #b8bce6;
+  --accent: #2ee6c0;
+  --warn: #ffb86b;
+  --radius: 14px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", Tahoma, sans-serif;
+  --font-ar: "Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Geeza Pro", serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+#app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+}
+
+h1 { font-size: 1.5rem; margin: 8px 0 12px; }
+h1 .ar { display: block; font-family: var(--font-ar); font-weight: 400; color: var(--accent); }
+
+.top { display: flex; gap: 8px; align-items: center; min-height: 28px; color: var(--muted); font-size: 0.9rem; }
+.badge { background: var(--warn); color: #1a1a1a; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
+
+.instruction { margin: 0 0 16px; }
+.hint, .status, .label { color: var(--muted); font-size: 0.95rem; }
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin: 0 0 16px;
+}
+.card p { margin: 0 0 8px; }
+
+.arabic { font-family: var(--font-ar); direction: rtl; text-align: right; }
+.dhikr .arabic { font-size: 2rem; line-height: 1.6; }
+.reference { font-size: 1.5rem; line-height: 2; }
+.translit { font-style: italic; }
+.meaning { color: var(--muted); }
+audio { width: 100%; margin-top: 8px; }
+
+.practice { margin: 0 0 16px; }
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 12px 0;
+}
+.stage video, .stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: scaleX(-1); /* mirror, like a selfie */
+}
+
+.feedback { min-height: 1.5em; font-size: 1.1rem; font-weight: 600; }
+.feedback.ok { color: var(--accent); }
+.feedback.warn { color: var(--warn); }
+.feedback .missing { display: inline-block; font-size: 1.3rem; margin-top: 4px; }
+
+.btn {
+  min-height: 52px;
+  min-width: 120px;
+  padding: 12px 22px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #06261f;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn.secondary { background: transparent; color: var(--text); border: 2px solid var(--muted); }
+.btn.recording { background: var(--warn); color: #1a1a1a; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+
+.nav { display: flex; justify-content: space-between; gap: 12px; margin: 24px 0; }
+.nav .btn { flex: 1; }
+
+.footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+[hidden] { display: none !important; }

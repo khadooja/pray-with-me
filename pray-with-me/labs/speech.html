@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مختبر التلاوة | Pray With Me</title>
+    <link rel="stylesheet" href="/src/ui/style.css" />
+    <style>
+      pre { direction: ltr; text-align: left; background: var(--card); padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 0.9rem; white-space: pre-wrap; }
+      dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; }
+      dt { color: var(--muted); }
+      dd { margin: 0; }
+    </style>
+  </head>
+  <body>
+    <main id="app">
+      <h1>مختبر التلاوة</h1>
+      <p class="hint">
+        الهدف: نقيس سرعة التعرف على الكلام (خصوصاً على الجوال) ونجرب نماذج مختلفة.
+        النموذج الحالي محدد في <code dir="ltr">src/config.js</code> (ASR_MODEL_ID).
+      </p>
+      <dl>
+        <dt>النموذج</dt><dd id="model" dir="ltr"></dd>
+        <dt>التحميل</dt><dd id="progress">—</dd>
+        <dt>وقت التحميل</dt><dd id="loadTime">—</dd>
+        <dt>وقت التفريغ</dt><dd id="txTime">—</dd>
+      </dl>
+      <section class="card">
+        <p class="label">المرجع (الفاتحة):</p>
+        <p class="arabic reference" id="ref"></p>
+      </section>
+      <button class="btn" id="rec" disabled>تسجيل</button>
+      <p class="feedback warn" id="err"></p>
+      <h2>النص المسموع</h2>
+      <p class="arabic reference" id="transcript">—</p>
+      <h2>نتيجة المقارنة</h2>
+      <pre id="result">—</pre>
+    </main>
+
+    <script type="module">
+      import fajr from "/src/content/fajr.json";
+      import { ASR_MODEL_ID } from "/src/config.js";
+      import { preloadASR, startRecording, transcribe, compareRecitation } from "/src/speech/index.js";
+
+      const $ = (id) => document.getElementById(id);
+      const REF = fajr.steps.find((s) => s.id === "fatiha").reference;
+      $("ref").textContent = REF;
+      $("model").textContent = ASR_MODEL_ID + ("gpu" in navigator ? " (WebGPU متوفر)" : " (wasm)");
+
+      const files = {};
+      const t0 = performance.now();
+      preloadASR((p) => {
+        if (p.status !== "progress" || !p.file) return;
+        files[p.file] = Math.round(p.progress ?? 0);
+        $("progress").textContent = Object.entries(files).map(([f, v]) => `${f}: ${v}%`).join(" · ");
+      })
+        .then(() => {
+          $("loadTime").textContent = ((performance.now() - t0) / 1000).toFixed(1) + " ث";
+          $("progress").textContent = "جاهز ✓";
+          $("rec").disabled = false;
+        })
+        .catch((e) => ($("err").textContent = "فشل تحميل النموذج: " + e.message));
+
+      let recording = null;
+      $("rec").onclick = async () => {
+        const btn = $("rec");
+        $("err").textContent = "";
+        if (!recording) {
+          try {
+            recording = await startRecording();
+            btn.textContent = "إيقاف";
+          } catch (e) {
+            $("err").textContent = "ما قدرنا نشغل المايك: " + e.message;
+          }
+          return;
+        }
+        const rec = recording;
+        recording = null;
+        btn.disabled = true;
+        btn.textContent = "جاري التفريغ…";
+        try {
+          const audio = await rec.stop();
+          const seconds = (audio.length / 16000).toFixed(1);
+          const t1 = performance.now();
+          const text = await transcribe(audio, REF);
+          const dt = (performance.now() - t1) / 1000;
+          $("txTime").textContent = `${dt.toFixed(1)} ث لتسجيل مدته ${seconds} ث`;
+          $("transcript").textContent = text || "(فاضي)";
+          $("result").textContent = JSON.stringify(compareRecitation(text, REF), null, 2);
+        } catch (e) {
+          console.error(e);
+          $("err").textContent = "خطأ: " + e.message;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "تسجيل";
+        }
+      };
+    </script>
+  </body>
+</html>

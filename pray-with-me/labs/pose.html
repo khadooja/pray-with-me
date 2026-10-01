@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مختبر الوضعيات | Pray With Me</title>
+    <link rel="stylesheet" href="/src/ui/style.css" />
+    <style>
+      .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+      select { min-height: 52px; font: inherit; padding: 8px 12px; border-radius: 10px; }
+      pre { direction: ltr; text-align: left; background: var(--card); padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <main id="app">
+      <h1>مختبر الوضعيات</h1>
+      <p class="hint">
+        الهدف: ضبط الأرقام في <code dir="ltr">src/pose/rules/thresholds.js</code>.
+        حطي الجوال على الأرض على بعد مترين تقريباً من جنبك، وجربي الوضعية الصحيحة والخاطئة وسجلي الأرقام.
+      </p>
+      <div class="row">
+        <label>الوضعية:
+          <select id="step">
+            <option value="standing">القيام (standing)</option>
+            <option value="ruku">الركوع (ruku)</option>
+            <option value="sujood">السجود (sujood)</option>
+          </select>
+        </label>
+        <button class="btn" id="cam">تشغيل الكاميرا</button>
+      </div>
+      <p class="feedback warn" id="err"></p>
+      <div class="stage">
+        <video playsinline muted></video>
+        <canvas></canvas>
+      </div>
+      <pre id="out">—</pre>
+    </main>
+
+    <script type="module">
+      import { startCamera, runPoseLoop } from "/src/pose/detector.js";
+      import { evaluatePose, pickSide, inclineFromHorizontal, angleAt, THRESHOLDS } from "/src/pose/index.js";
+
+      const video = document.querySelector("video");
+      const canvas = document.querySelector("canvas");
+      const out = document.getElementById("out");
+      const stepSel = document.getElementById("step");
+      const btn = document.getElementById("cam");
+      const err = document.getElementById("err");
+      const r = (n) => (n == null ? null : Math.round(n * 100) / 100);
+
+      btn.onclick = async () => {
+        btn.disabled = true;
+        err.textContent = "";
+        try {
+          await startCamera(video);
+          await runPoseLoop(video, canvas, (lm, aspect) => {
+            const stepId = stepSel.value;
+            const data = { step: stepId, aspect: r(aspect), thresholds: THRESHOLDS[stepId] };
+            if (lm) {
+              const s = pickSide(lm);
+              data.torsoIncline = r(inclineFromHorizontal(s.shoulder, s.hip, aspect));
+              data.kneeAngle = r(angleAt(s.hip, s.knee, s.ankle, aspect));
+              data.noseY = r(s.nose.y);
+              data.hipY = r(s.hip.y);
+              data.visibility = {
+                shoulder: r(s.shoulder.visibility), hip: r(s.hip.visibility),
+                knee: r(s.knee.visibility), ankle: r(s.ankle.visibility), nose: r(s.nose.visibility),
+              };
+            } else {
+              data.landmarks = null;
+            }
+            data.result = evaluatePose(lm, stepId, aspect);
+            out.textContent = JSON.stringify(data, null, 2);
+          });
+          btn.textContent = "الكاميرا شغالة";
+        } catch (e) {
+          console.error(e);
+          err.textContent = "ما قدرنا نشغل الكاميرا أو النموذج: " + (e?.message || e);
+          btn.disabled = false;
+        }
+      };
+    </script>
+  </body>
+</html>
