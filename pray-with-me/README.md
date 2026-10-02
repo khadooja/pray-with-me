@@ -101,10 +101,10 @@ docs/CONTRACTS.md          team guide (Arabic)
 
 ## Team
 
-- **Layan Alzahrani**: Lead and content
+- **Layan Alosaimi**: Lead and content
 - **Rahaf Altair**: AI
 - **Khadija Alamoudi**: System
-- **Layan Alosaimi**: UX
+- **Layan Alzahrani**: UX
 
 ## License
 
