@@ -36,6 +36,14 @@ h1 .ar { display: block; font-family: var(--font-ar); font-weight: 400; color: v
 .badge { background: var(--warn); color: #1a1a1a; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
 
 .instruction { margin: 0 0 16px; }
+/* What the camera checks / does not check on this pose step */
+.checks {
+  margin: -8px 0 16px;
+  padding-left: 10px;
+  border-left: 3px solid var(--muted);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
 .hint, .status, .label { color: var(--muted); font-size: 0.95rem; }
 
 .card {

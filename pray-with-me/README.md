@@ -11,15 +11,22 @@ Built for the *AI Challenge Serving Islamic Content* (Bathel Foundation).
 
 **All processing runs in your browser.** No video or audio ever leaves your device.
 There is no backend, no API keys and no database. The only network traffic is
-downloading the app itself and the AI models: the MediaPipe pose model from Google
-storage, and the Whisper model from Hugging Face. Progress (which steps you completed)
+downloading the app itself and the AI models and runtimes: the MediaPipe pose model from
+Google storage (`storage.googleapis.com`), the Whisper model from Hugging Face
+(`huggingface.co`), and the MediaPipe and onnxruntime WebAssembly files from `cdn.jsdelivr.net`. Progress (which steps you completed)
 is stored only in your browser's `localStorage`.
 
 ## What it does, and what it does NOT do
 
 It **does**:
 - Guide you through one rakah of Fajr: Takbir → Standing → Al-Fatihah → Ruku → Sujood.
-- Check your **posture** in standing, ruku and sujood, using a camera placed to your side.
+- Check parts of your **posture** with a camera placed to your side. Exactly what is checked:
+  - **Standing:** your back is upright and your knees are straight.
+  - **Ruku:** your back is level with the floor and your knees are straight.
+  - **Sujood:** your head is lower than your hips.
+
+  **Not checked:** hand position (right over left in standing, hands on knees in ruku), and in
+  sujood whether your palms, knees, toes, forehead and nose touch the ground.
 - Check that **Al-Fatihah was recited completely and in order**.
 
 It does **NOT**:

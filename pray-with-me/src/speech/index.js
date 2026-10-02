@@ -52,12 +52,22 @@ export function preloadASR(onProgress) {
 
 // Starts recording from the microphone. Returns { stop } where
 // stop() resolves to a Float32Array of mono audio at 16000 Hz.
+// In mock mode the microphone is never touched: stop() resolves an empty array.
 export async function startRecording() {
+  if (USE_MOCK) return { stop: () => Promise.resolve(new Float32Array(0)) };
+
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-  const recorder = new MediaRecorder(stream);
   const chunks = [];
-  recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-  recorder.start();
+  let recorder;
+  try {
+    recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+    recorder.start();
+  } catch (err) {
+    // MediaRecorder unsupported or failed: turn the microphone off before reporting.
+    stream.getTracks().forEach((t) => t.stop());
+    throw err;
+  }
 
   function stop() {
     return new Promise((resolve, reject) => {

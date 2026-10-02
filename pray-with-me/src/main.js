@@ -5,7 +5,7 @@ import fajr from "./content/fajr.json";
 import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS } from "./config.js";
 import { t } from "./i18n/index.js";
 import { recordAttempt } from "./progress/store.js";
-import { evaluatePose } from "./pose/index.js";
+import { evaluatePose, resetPoseMock } from "./pose/index.js";
 import { startCamera, stopCamera, runPoseLoop, shouldMirror } from "./pose/detector.js";
 import { preloadASR, startRecording, transcribe, compareRecitation } from "./speech/index.js";
 import { unlockAudio, playSuccess, playHint, vibrateSuccess } from "./ui/sound.js";
@@ -81,6 +81,7 @@ function renderStep(step) {
     ${header()}
     <h1>${esc(step.title.en)} <span class="ar" dir="rtl" lang="ar">${esc(step.title.ar)}</span></h1>
     <p class="instruction">${esc(step.instruction.en)}</p>
+    ${step.type === "pose" ? `<p class="checks">${esc(t(`checks_${step.check}`))}</p>` : ""}
     ${dhikrCard(step.dhikr)}
     <section class="practice" id="practice"></section>
     <nav class="nav">
@@ -136,13 +137,17 @@ function renderPose(step, root) {
   // a hint tone every HINT_AFTER_SECONDS without success (max MAX_HINTS), a chime on success.
   let lastHintAt = null;
   let hints = 0;
+  let leavingForSetup = false; // opening "Setup help" is not a failed attempt
 
   const setFeedback = (text, kind = "") => {
     fb.textContent = text;
     fb.className = `feedback ${kind}`;
   };
 
-  root.querySelector("#setup-help").onclick = () => showSetup(current, () => go(current));
+  root.querySelector("#setup-help").onclick = () => {
+    leavingForSetup = true;
+    showSetup(current, () => go(current));
+  };
 
   function onLandmarks(points, aspect) {
     if (done) return;
@@ -177,35 +182,24 @@ function renderPose(step, root) {
     unlockAudio(); // must run inside the click, before any await (iOS)
     btn.disabled = true;
     started = true;
+
+    if (USE_MOCK) {
+      // Mock: no camera at all. evaluatePose ignores landmarks, so simulate frames.
+      resetPoseMock(step.check);
+      btn.hidden = true;
+      setFeedback(t("mock_no_camera"));
+      const id = setInterval(() => onLandmarks(null, 4 / 3), 100);
+      stopLoop = () => clearInterval(id);
+      return;
+    }
+
+    // Stage 1: camera. Failures here get camera-specific messages.
     setFeedback(t("camera_starting"));
     try {
       stream = await startCamera(video);
-      if (disposed) return stopCamera(stream);
-      stage.classList.toggle("mirrored", shouldMirror(stream));
-      stage.hidden = false;
-      btn.hidden = true;
-      if (USE_MOCK) {
-        // Mock: evaluatePose ignores landmarks, so no model is needed.
-        const id = setInterval(() => onLandmarks(null, 4 / 3), 100);
-        stopLoop = () => clearInterval(id);
-      } else {
-        const stop = await runPoseLoop(video, canvas, onLandmarks);
-        if (disposed) stop();
-        else stopLoop = stop;
-      }
     } catch (err) {
       console.error(err);
-      if (USE_MOCK && !disposed) {
-        // No camera on this machine: still simulate the flow for UI work.
-        setFeedback(t("mock_no_camera"));
-        const id = setInterval(() => onLandmarks(null, 4 / 3), 100);
-        stopLoop = () => clearInterval(id);
-        return;
-      }
-      stopCamera(stream);
       stream = null;
-      stage.hidden = true;
-      btn.hidden = false;
       btn.disabled = false;
       const name = err?.name;
       setFeedback(
@@ -214,6 +208,27 @@ function renderPose(step, root) {
           : "camera_error"),
         "warn"
       );
+      return;
+    }
+    if (disposed) return stopCamera(stream);
+    stage.classList.toggle("mirrored", shouldMirror(stream));
+    stage.hidden = false;
+    btn.hidden = true;
+
+    // Stage 2: pose model (GPU, then CPU). The camera works, so say the model failed.
+    try {
+      const stop = await runPoseLoop(video, canvas, onLandmarks);
+      if (disposed) stop();
+      else stopLoop = stop;
+    } catch (err) {
+      console.error(err);
+      if (disposed) return;
+      stopCamera(stream);
+      stream = null;
+      stage.hidden = true;
+      btn.hidden = false;
+      btn.disabled = false;
+      setFeedback(t("pose_model_error"), "warn");
     }
   };
 
@@ -221,8 +236,9 @@ function renderPose(step, root) {
     disposed = true;
     stopLoop?.();
     stopCamera(stream);
-    // An attempt that was started but not finished counts as not completed.
-    if (started && !done) recordAttempt(step.id, false);
+    // An attempt that was started but not finished counts as not completed,
+    // unless the user just opened "Setup help" (they come back to this step).
+    if (started && !done && !leavingForSetup) recordAttempt(step.id, false);
   };
 }
 

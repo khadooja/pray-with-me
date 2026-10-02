@@ -27,6 +27,12 @@ function evaluatePoseMock(stepId) {
   return { ok: true, issues: [] };
 }
 
+// Mock only: restart the fake 3 s timer, so every visit to a step replays the flow.
+// Not part of the evaluatePose contract.
+export function resetPoseMock(stepId) {
+  delete mockStart[stepId];
+}
+
 export function evaluatePose(landmarks, stepId, aspect = 1) {
   if (USE_MOCK) return evaluatePoseMock(stepId);
 

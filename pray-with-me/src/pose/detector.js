@@ -4,15 +4,23 @@ import { MEDIAPIPE_WASM_URL, POSE_MODEL_URL } from "../config.js";
 
 let landmarkerPromise = null;
 
-// Created lazily once and reused across steps.
+// Created lazily once and reused across steps. Tries the GPU delegate first,
+// then falls back to CPU (devices without usable WebGL).
 function getLandmarker() {
   landmarkerPromise ??= (async () => {
     const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
-    return PoseLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate: "GPU" },
-      runningMode: "VIDEO",
-      numPoses: 1,
-    });
+    const create = (delegate) =>
+      PoseLandmarker.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate },
+        runningMode: "VIDEO",
+        numPoses: 1,
+      });
+    try {
+      return await create("GPU");
+    } catch (err) {
+      console.warn("Pose GPU delegate failed, retrying with CPU:", err);
+      return create("CPU");
+    }
   })().catch((err) => {
     landmarkerPromise = null; // allow a retry
     throw err;
@@ -28,7 +36,14 @@ export async function startCamera(video) {
   video.srcObject = stream;
   video.muted = true;
   video.playsInline = true;
-  await video.play();
+  try {
+    await video.play();
+  } catch (err) {
+    // The caller never receives the stream in this case, so turn the camera off here.
+    stream.getTracks().forEach((track) => track.stop());
+    video.srcObject = null;
+    throw err;
+  }
   return stream;
 }
 

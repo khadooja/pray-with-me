@@ -38,7 +38,12 @@
   "camera_denied": "Camera access was blocked. Please allow the camera in your browser settings, then try again.",
   "camera_missing": "No camera was found on this device.",
   "camera_error": "The camera could not be started. Please try again.",
-  "mock_no_camera": "No camera available. Mock mode will simulate the feedback.",
+  "mock_no_camera": "Mock mode: the camera is off and feedback is simulated.",
+  "pose_model_error": "The pose model could not be loaded. Check your internet connection and try again.",
+
+  "checks_standing": "Checked: your back is upright and your knees are straight. Not checked: hand position.",
+  "checks_ruku": "Checked: your back is level and your knees are straight. Not checked: hand position (hands on knees).",
+  "checks_sujood": "Checked: your head is lower than your hips. Not checked: palms, knees, toes, or forehead and nose touching the ground.",
 
   "recite_this": "Recite:",
   "start_reciting": "Start reciting",
