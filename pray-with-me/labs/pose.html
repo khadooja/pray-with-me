@@ -37,7 +37,7 @@
     </main>
 
     <script type="module">
-      import { startCamera, runPoseLoop } from "/src/pose/detector.js";
+      import { startCamera, runPoseLoop, shouldMirror } from "/src/pose/detector.js";
       import { evaluatePose, pickSide, inclineFromHorizontal, angleAt, THRESHOLDS } from "/src/pose/index.js";
 
       const video = document.querySelector("video");
@@ -52,7 +52,8 @@
         btn.disabled = true;
         err.textContent = "";
         try {
-          await startCamera(video);
+          const stream = await startCamera(video);
+          video.parentElement.classList.toggle("mirrored", shouldMirror(stream));
           await runPoseLoop(video, canvas, (lm, aspect) => {
             const stepId = stepSel.value;
             const data = { step: stepId, aspect: r(aspect), thresholds: THRESHOLDS[stepId] };

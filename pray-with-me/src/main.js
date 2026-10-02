@@ -2,17 +2,24 @@
 // Each step type (guided / pose / speech) renders its own practice area and
 // returns a cleanup function that go() calls before showing another step.
 import fajr from "./content/fajr.json";
-import { USE_MOCK, POSE_HOLD_SECONDS } from "./config.js";
+import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS } from "./config.js";
 import { t } from "./i18n/index.js";
 import { recordAttempt } from "./progress/store.js";
 import { evaluatePose } from "./pose/index.js";
-import { startCamera, stopCamera, runPoseLoop } from "./pose/detector.js";
+import { startCamera, stopCamera, runPoseLoop, shouldMirror } from "./pose/detector.js";
 import { preloadASR, startRecording, transcribe, compareRecitation } from "./speech/index.js";
+import { unlockAudio, playSuccess, playHint, vibrateSuccess } from "./ui/sound.js";
+import { renderSetup } from "./ui/setup.js";
 
 const steps = fajr.steps;
 const app = document.getElementById("app");
 let current = 0;
 let cleanup = null;
+
+// The camera setup screen is shown once per visit, before the first pose step.
+const FIRST_POSE = steps.findIndex((s) => s.type === "pose");
+let setupSeen = false;
+const MAX_HINTS = 3;
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -22,11 +29,36 @@ function go(i) {
   cleanup = null;
   current = Math.max(0, Math.min(i, steps.length));
   window.scrollTo(0, 0);
-  if (current === steps.length) renderFinished();
+  if (current === FIRST_POSE && !setupSeen) showSetup(current, current > 0 ? () => go(current - 1) : null);
+  else if (current === steps.length) renderFinished();
   else renderStep(steps[current]);
 }
 
+// Setup screen for step i. "I'm ready" opens step i; onBack is where Back goes.
+function showSetup(i, onBack) {
+  cleanup?.();
+  cleanup = null;
+  current = i;
+  window.scrollTo(0, 0);
+  app.innerHTML = `${header()}<section id="setup"></section>${footer()}`;
+  renderSetup(app.querySelector("#setup"), {
+    onReady: () => {
+      setupSeen = true;
+      go(i);
+    },
+    onBack,
+  });
+}
+
 // ---------- layout ----------
+
+function header() {
+  return `
+    <header class="top">
+      <span class="step-count">${esc(t("step_of", { x: current + 1, n: steps.length }))}</span>
+      ${USE_MOCK ? `<span class="badge">${esc(t("mock_mode"))}</span>` : ""}
+    </header>`;
+}
 
 function footer() {
   return `<footer class="footer">${esc(t("footer"))}</footer>`;
@@ -46,10 +78,7 @@ function dhikrCard(d) {
 function renderStep(step) {
   const isLast = current === steps.length - 1;
   app.innerHTML = `
-    <header class="top">
-      <span class="step-count">${esc(t("step_of", { x: current + 1, n: steps.length }))}</span>
-      ${USE_MOCK ? `<span class="badge">${esc(t("mock_mode"))}</span>` : ""}
-    </header>
+    ${header()}
     <h1>${esc(step.title.en)} <span class="ar" dir="rtl" lang="ar">${esc(step.title.ar)}</span></h1>
     <p class="instruction">${esc(step.instruction.en)}</p>
     ${dhikrCard(step.dhikr)}
@@ -82,7 +111,8 @@ function renderFinished() {
 
 function renderPose(step, root) {
   root.innerHTML = `
-    <p class="hint">${esc(t("camera_hint"))}</p>
+    <p class="hint">${esc(t("camera_hint"))}
+      <button class="link" id="setup-help">${esc(t("setup_help"))}</button></p>
     <button class="btn" id="cam">${esc(t("start_camera"))}</button>
     <div class="stage" hidden>
       <video playsinline muted></video>
@@ -102,24 +132,39 @@ function renderPose(step, root) {
   let done = false;
   let okSince = null;
   let disposed = false;
+  // Audio cues (the user can't see the screen in sujood): silent while wrong,
+  // a hint tone every HINT_AFTER_SECONDS without success (max MAX_HINTS), a chime on success.
+  let lastHintAt = null;
+  let hints = 0;
 
   const setFeedback = (text, kind = "") => {
     fb.textContent = text;
     fb.className = `feedback ${kind}`;
   };
 
+  root.querySelector("#setup-help").onclick = () => showSetup(current, () => go(current));
+
   function onLandmarks(points, aspect) {
     if (done) return;
+    const now = performance.now();
+    lastHintAt ??= now; // hint timer starts when evaluation starts
     const result = evaluatePose(points, step.check, aspect);
     if (!result.ok) {
       okSince = null;
       setFeedback(t(result.issues[0]), "warn");
+      if (hints < MAX_HINTS && now - lastHintAt >= HINT_AFTER_SECONDS * 1000) {
+        playHint();
+        hints++;
+        lastHintAt = now;
+      }
       return;
     }
-    okSince ??= performance.now();
-    if (performance.now() - okSince >= POSE_HOLD_SECONDS * 1000) {
+    okSince ??= now;
+    if (now - okSince >= POSE_HOLD_SECONDS * 1000) {
       done = true;
       setFeedback(t("pose_done"), "ok");
+      playSuccess();
+      vibrateSuccess();
       recordAttempt(step.id, true);
       stopLoop?.();
       stopLoop = null;
@@ -129,12 +174,14 @@ function renderPose(step, root) {
   }
 
   btn.onclick = async () => {
+    unlockAudio(); // must run inside the click, before any await (iOS)
     btn.disabled = true;
     started = true;
     setFeedback(t("camera_starting"));
     try {
       stream = await startCamera(video);
       if (disposed) return stopCamera(stream);
+      stage.classList.toggle("mirrored", shouldMirror(stream));
       stage.hidden = false;
       btn.hidden = true;
       if (USE_MOCK) {
@@ -202,23 +249,16 @@ function renderSpeech(step, root) {
     fb.className = `feedback ${kind}`;
   };
 
+  // The model is already loading in the background (startAsrPreload); just show its state.
+  const showModel = () => {
+    modelLine.textContent =
+      asr.status === "ready" ? t("model_ready")
+      : asr.status === "error" ? t("model_error")
+      : `${t("model_loading")} ${asr.pct}%`;
+  };
   if (!USE_MOCK) {
-    const files = {};
-    modelLine.textContent = t("model_loading");
-    preloadASR((p) => {
-      if (disposed || p.status !== "progress" || !p.file) return;
-      files[p.file] = { loaded: p.loaded ?? 0, total: p.total ?? 0 };
-      const all = Object.values(files);
-      const loaded = all.reduce((s, f) => s + f.loaded, 0);
-      const total = all.reduce((s, f) => s + f.total, 0);
-      const pct = total ? Math.round((loaded / total) * 100) : 0;
-      modelLine.textContent = `${t("model_loading")} ${pct}%`;
-    })
-      .then(() => !disposed && (modelLine.textContent = t("model_ready")))
-      .catch((err) => {
-        console.error(err);
-        if (!disposed) modelLine.textContent = t("model_error");
-      });
+    showModel();
+    asr.listeners.add(showModel);
   }
 
   // Mock: pretend the user forgot the last two words.
@@ -251,6 +291,8 @@ function renderSpeech(step, root) {
     try {
       const audio = await rec.stop();
       const text = await transcribe(audio, mockText);
+      // A successful transcription means the model loaded (e.g. after an earlier error).
+      if (!USE_MOCK && asr.status !== "ready") setAsr({ status: "ready" });
       if (disposed) return;
       const result = compareRecitation(text, step.reference);
       recordAttempt(step.id, result.complete);
@@ -277,10 +319,41 @@ function renderSpeech(step, root) {
 
   return () => {
     disposed = true;
+    asr.listeners.delete(showModel);
     // Leaving mid-recording: stop the mic and drop the audio.
     recording?.stop().catch(() => {});
     recording = null;
   };
 }
 
+// ---------- speech model preload ----------
+// Starts downloading Whisper as soon as the app opens (not at the speech step),
+// so it is usually ready by the time the user reaches Al-Fatihah.
+// The speech step only reads `asr` and subscribes to changes via asr.listeners.
+
+const asr = { status: "loading", pct: 0, listeners: new Set() }; // status: loading | ready | error
+
+function setAsr(patch) {
+  Object.assign(asr, patch);
+  asr.listeners.forEach((fn) => fn());
+}
+
+function startAsrPreload() {
+  const files = {};
+  preloadASR((p) => {
+    if (p.status !== "progress" || !p.file) return;
+    files[p.file] = { loaded: p.loaded ?? 0, total: p.total ?? 0 };
+    const all = Object.values(files);
+    const loaded = all.reduce((s, f) => s + f.loaded, 0);
+    const total = all.reduce((s, f) => s + f.total, 0);
+    if (asr.status === "loading") setAsr({ pct: total ? Math.round((loaded / total) * 100) : 0 });
+  })
+    .then(() => setAsr({ status: "ready", pct: 100 }))
+    .catch((err) => {
+      console.error(err);
+      setAsr({ status: "error" });
+    });
+}
+
+if (!USE_MOCK) startAsrPreload();
 go(0);

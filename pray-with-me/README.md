@@ -28,6 +28,21 @@ It does **NOT**:
 
 It is a practice aid. For religious questions, please ask a qualified scholar.
 
+## Design decisions
+
+1. **Audio cues, not just text.** In sujood your face is on the floor, so you can't read the
+   screen. Pose steps therefore play short tones that are generated in code (`src/ui/sound.js`):
+   - a rising chime once your position has been correct for `POSE_HOLD_SECONDS`
+   - a soft, lower hint tone if you haven't succeeded after `HINT_AFTER_SECONDS`. It repeats at most 3 times and stays silent the rest of the time.
+
+   Android phones also vibrate on success. The on-screen text feedback still works exactly as
+   before, so the sound adds to it and never replaces it. A **Test sound** button on the setup
+   screen lets you check your volume first.
+2. **Side camera placement.** The phone goes on the floor, about 2 m to your **side**, not in front.
+   You keep facing forward (towards the qibla) as usual. From the side, the camera can see the angles
+   that matter: back level in ruku, head below hips in sujood. A one-time setup screen with an
+   illustration explains this before the first pose step, and a "Setup help" link opens it again.
+
 ## Run it locally
 
 Requirements: **Node.js 18+**.

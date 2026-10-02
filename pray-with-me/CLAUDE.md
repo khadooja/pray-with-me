@@ -27,8 +27,18 @@ There is no backend, no API keys and no database. It deploys as static files on 
 ## Ownership (see docs/CONTRACTS.md)
 - Content: `fajr.json`, `SOURCES.md`, `public/audio/`
 - AI: `src/pose/`, `src/speech/`, `thresholds.js`
-- UX: `src/ui/style.css`, `src/i18n/en.json`
+- UX: `src/ui/style.css`, `src/i18n/en.json`, `src/ui/setup.js` (setup screen and its SVG), `src/ui/sound.js` (generated tones)
 - System: `main.js`, `config.js`, `progress/`, `vite.config.js`, deployment
+
+## Design decisions (keep these)
+- **Audio cues for pose steps.** The user can't see the screen in sujood. `src/ui/sound.js` generates the tones with Web Audio, with no audio files.
+  - Silent while the pose is wrong.
+  - `playHint()` after `HINT_AFTER_SECONDS` without success (config.js: 10, or 2 in mock), repeating at most every `HINT_AFTER_SECONDS`, max 3 per step.
+  - `playSuccess()` and `vibrateSuccess()` once, at the `POSE_HOLD_SECONDS` "done" moment.
+  - `unlockAudio()` must be called synchronously in a click (Start camera, I'm ready, Test sound) before any `await`.
+  - The text feedback must keep working without audio.
+- **Side camera placement.** The phone goes on the floor about 2 m to the user's SIDE, and the user faces forward. A one-time setup screen (in memory, per visit) appears before the first pose step, and a "Setup help" link reopens it. The preview is mirrored only for a user-facing camera (`shouldMirror(stream)` in detector.js plus the `.stage.mirrored` CSS).
+- No microphone use or recording during pose steps.
 
 ## Rules
 - Scope: the app checks posture and the completeness and order of Al-Fatihah **only**. It does not assess tajweed or pronunciation and never rules on the validity of prayer. Keep this in the README and in the UI footer.

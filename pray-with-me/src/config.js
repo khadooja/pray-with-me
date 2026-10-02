@@ -17,3 +17,9 @@ export const ASR_MODEL_ID = "Xenova/whisper-base";
 
 // How many seconds the user must hold a correct pose before the step counts as done.
 export const POSE_HOLD_SECONDS = 2;
+
+// كم ثانية ننتظر (من بداية الخطوة أو من آخر تلميح) قبل ما نشغّل نغمة التلميح
+// إذا المستخدم ما وصل للوضعية الصحيحة. بحد أقصى 3 تلميحات لكل خطوة.
+// رقم مبدئي، اضبطوه بالتجربة. في وضع ?mock=1 نخليه 2 عشان تسمعون النغمتين بسرعة
+// (الوضعية الوهمية تصير صحيحة بعد 3 ثواني).
+export const HINT_AFTER_SECONDS = USE_MOCK ? 2 : 10;

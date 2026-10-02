@@ -70,7 +70,31 @@ audio { width: 100%; margin-top: 8px; }
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform: scaleX(-1); /* mirror, like a selfie */
+}
+/* Mirror only for a user-facing (selfie) camera; main.js sets .mirrored. */
+.stage.mirrored video, .stage.mirrored canvas { transform: scaleX(-1); }
+
+/* Camera setup screen (src/ui/setup.js) */
+.setup-art {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin: 8px auto 16px;
+}
+.setup-list { padding-left: 1.4em; margin: 0 0 16px; }
+.setup-list li { margin-bottom: 10px; }
+
+/* Text-style button, e.g. "Setup help" */
+.link {
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  min-height: 44px;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .feedback { min-height: 1.5em; font-size: 1.1rem; font-weight: 600; }

@@ -32,6 +32,16 @@ export async function startCamera(video) {
   return stream;
 }
 
+// Mirror the preview only for a user-facing (selfie) camera. Laptops usually
+// don't report facingMode, so anything except "environment" counts as user-facing.
+export function shouldMirror(stream) {
+  try {
+    return stream?.getVideoTracks()[0]?.getSettings().facingMode !== "environment";
+  } catch {
+    return true;
+  }
+}
+
 export function stopCamera(stream) {
   stream?.getTracks().forEach((track) => track.stop());
 }
