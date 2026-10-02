@@ -61,6 +61,44 @@ h1 .ar { display: block; font-family: var(--font-ar); font-weight: 400; color: v
 .meaning { color: var(--muted); }
 audio { width: 100%; margin-top: 8px; }
 
+/* Demonstration video (src/ui/video.js). When a dhikr card follows, the two
+   cards are joined into one block: video on top, text card directly below. */
+.video-card {
+  background: #000;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 0 0 16px;
+}
+.video-card video {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  min-height: 160px;
+  object-fit: contain;
+  background: #000;
+}
+.video-controls {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: var(--card);
+}
+.vbtn {
+  flex: 1;
+  min-height: 48px;
+  border: 2px solid var(--muted);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.vbtn:first-child { background: var(--accent); border-color: var(--accent); color: #06261f; }
+.vbtn:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+.video-card.attached { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.video-card.attached + .dhikr { border-top-left-radius: 0; border-top-right-radius: 0; }
+
 .practice { margin: 0 0 16px; }
 
 .stage {

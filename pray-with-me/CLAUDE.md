@@ -21,7 +21,7 @@ There is no backend, no API keys and no database. It deploys as static files on 
 ## Contracts (shapes must not change)
 - `evaluatePose(landmarks, stepId, aspect) → { ok, issues: string[] }` (`src/pose/index.js`). `landmarks` is 33 MediaPipe points or null, and `aspect` = width/height. Issues are codes, and their messages live **only** in `src/i18n/en.json`. A null input gives `not_visible`, and an unknown step throws. The mock returns `back_not_flat` for 3 s, then ok.
 - `compareRecitation(transcript, reference) → { complete, missing, orderOk, matched, total }` (`src/speech/align.js`). This is a pure function. The LCS traceback accepts a match only if `similar && L[i][j] === L[i+1][j+1] + 1`. Keep that condition.
-- Content: `src/content/fajr.json` steps have `id`, `type` (guided|pose|speech), `title{ar,en}`, `instruction{en}`, an optional `dhikr{arabic,transliteration,meaning{en},audio}` and `source`. A pose step needs `check` (standing|ruku|sujood). A speech step needs `reference` (Arabic without diacritics), `transliteration`, `meaning` and `audio`.
+- Content: `src/content/fajr.json` steps have `id`, `type` (guided|pose|speech), `title{ar,en}`, `instruction{en}`, an optional `dhikr{arabic,transliteration,meaning{en},audio}`, an optional `video` (e.g. `/video/ruku.mp4`, file in `public/video/`) and `source`. A pose step needs `check` (standing|ruku|sujood). A speech step needs `reference` (Arabic without diacritics), `transliteration`, `meaning` and `audio`.
 - Speech worker messages: in `{type:"load",modelId}` / `{type:"transcribe",audio,modelId}`, out `progress` / `ready` / `result{text}` / `error{message}`.
 
 ## Ownership (see docs/CONTRACTS.md)
@@ -39,6 +39,7 @@ There is no backend, no API keys and no database. It deploys as static files on 
   - The text feedback must keep working without audio.
 - **Side camera placement.** The phone goes on the floor about 2 m to the user's SIDE, and the user faces forward. A one-time setup screen (in memory, per visit) appears before the first pose step, and a "Setup help" link reopens it. The preview is mirrored only for a user-facing camera (`shouldMirror(stream)` in detector.js plus the `.stage.mirrored` CSS).
 - No microphone use or recording during pose steps.
+- **Demo video per step (optional `video` field).** `src/ui/video.js` renders it above the dhikr card with custom controls (play/pause, replay, speed from `VIDEO_SPEEDS` in config.js). No autoplay, never muted. A missing or failing clip hides the card and the step works as before. A working clip hides the separate dhikr audio player (the clip has the voice). It is paused when the camera starts and when recitation recording starts. Clips must stay under 5 MB. Do not edit `fajr.json` to add videos unless asked (the content owner owns it).
 
 ## Rules
 - Scope: the app checks posture and the completeness and order of Al-Fatihah **only**. It does not assess tajweed or pronunciation and never rules on the validity of prayer. Keep this in the README and in the UI footer.

@@ -22,6 +22,18 @@ before release. Rows marked **TODO** are still open.
 | Al-Fatihah recitation audio (`public/audio/`) | TODO | TODO |
 | Dhikr audio for takbir / ruku / sujood | TODO | TODO |
 
+## Demonstration videos (`public/video/`)
+
+One optional clip per step, referenced by the `video` field in `fajr.json`.
+
+| Step | Clip file | Source of the clip | Demonstrator's consent | Reviewed by |
+| --- | --- | --- | --- | --- |
+| takbir | `/video/takbir.mp4` | TODO | TODO | TODO |
+| standing | `/video/standing.mp4` | TODO | TODO | TODO |
+| fatiha | `/video/fatiha.mp4` | TODO | TODO | TODO |
+| ruku | `/video/ruku.mp4` | TODO | TODO | TODO |
+| sujood | `/video/sujood.mp4` | TODO | TODO | TODO |
+
 ## Software and models
 
 | Item | Version | License | Link |

@@ -45,6 +45,13 @@
   "checks_ruku": "Checked: your back is level and your knees are straight. Not checked: hand position (hands on knees).",
   "checks_sujood": "Checked: your head is lower than your hips. Not checked: palms, knees, toes, or forehead and nose touching the ground.",
 
+  "video_label": "Demonstration video",
+  "video_play": "Play",
+  "video_pause": "Pause",
+  "video_replay": "Replay",
+  "video_speed": "{x}x",
+  "video_speed_label": "Playback speed",
+
   "recite_this": "Recite:",
   "start_reciting": "Start reciting",
   "done_reciting": "Done",

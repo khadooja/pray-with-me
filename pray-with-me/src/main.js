@@ -10,11 +10,13 @@ import { startCamera, stopCamera, runPoseLoop, shouldMirror } from "./pose/detec
 import { preloadASR, startRecording, transcribe, compareRecitation } from "./speech/index.js";
 import { unlockAudio, playSuccess, playHint, vibrateSuccess } from "./ui/sound.js";
 import { renderSetup } from "./ui/setup.js";
+import { videoCard, setupVideo } from "./ui/video.js";
 
 const steps = fajr.steps;
 const app = document.getElementById("app");
 let current = 0;
 let cleanup = null;
+let currentVideo = null; // demo video controller of the step on screen (see ui/video.js)
 
 // The camera setup screen is shown once per visit, before the first pose step.
 const FIRST_POSE = steps.findIndex((s) => s.type === "pose");
@@ -64,14 +66,16 @@ function footer() {
   return `<footer class="footer">${esc(t("footer"))}</footer>`;
 }
 
-function dhikrCard(d) {
+// hasVideo: the demo clip already has the voice, so the audio player stays hidden
+// (ui/video.js reveals it again if the clip fails to load).
+function dhikrCard(d, hasVideo = false) {
   if (!d) return "";
   return `
     <section class="card dhikr">
       <p class="arabic" dir="rtl" lang="ar">${esc(d.arabic)}</p>
       <p class="translit">${esc(d.transliteration)}</p>
       <p class="meaning">${esc(d.meaning?.en)}</p>
-      ${d.audio ? `<audio controls preload="none" src="${esc(d.audio)}"></audio>` : ""}
+      ${d.audio ? `<audio class="dhikr-audio" controls preload="none" src="${esc(d.audio)}"${hasVideo ? " hidden" : ""}></audio>` : ""}
     </section>`;
 }
 
@@ -82,7 +86,8 @@ function renderStep(step) {
     <h1>${esc(step.title.en)} <span class="ar" dir="rtl" lang="ar">${esc(step.title.ar)}</span></h1>
     <p class="instruction">${esc(step.instruction.en)}</p>
     ${step.type === "pose" ? `<p class="checks">${esc(t(`checks_${step.check}`))}</p>` : ""}
-    ${dhikrCard(step.dhikr)}
+    ${videoCard(step)}
+    ${dhikrCard(step.dhikr, Boolean(step.video))}
     <section class="practice" id="practice"></section>
     <nav class="nav">
       <button class="btn secondary" id="back" ${current === 0 ? "disabled" : ""}>${esc(t("back"))}</button>
@@ -93,9 +98,18 @@ function renderStep(step) {
   app.querySelector("#back").onclick = () => go(current - 1);
   app.querySelector("#next").onclick = () => go(current + 1);
 
+  const video = setupVideo(app);
+  currentVideo = video;
+
   const practice = app.querySelector("#practice");
-  if (step.type === "pose") cleanup = renderPose(step, practice);
-  else if (step.type === "speech") cleanup = renderSpeech(step, practice);
+  let stepCleanup = null;
+  if (step.type === "pose") stepCleanup = renderPose(step, practice);
+  else if (step.type === "speech") stepCleanup = renderSpeech(step, practice);
+  cleanup = () => {
+    video.dispose();
+    if (currentVideo === video) currentVideo = null;
+    stepCleanup?.();
+  };
 }
 
 function renderFinished() {
@@ -180,6 +194,7 @@ function renderPose(step, root) {
 
   btn.onclick = async () => {
     unlockAudio(); // must run inside the click, before any await (iOS)
+    currentVideo?.pause(); // stop the demo clip when the camera starts
     btn.disabled = true;
     started = true;
 
@@ -282,6 +297,7 @@ function renderSpeech(step, root) {
 
   btn.onclick = async () => {
     if (!recording) {
+      currentVideo?.pause(); // the demonstrator's voice must not reach the microphone
       btn.disabled = true;
       try {
         recording = await startRecording();
