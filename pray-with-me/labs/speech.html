@@ -6,6 +6,7 @@
     <title>مختبر التلاوة | Pray With Me</title>
     <link rel="stylesheet" href="/src/ui/style.css" />
     <style>
+      .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
       pre { direction: ltr; text-align: left; background: var(--card); padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 0.9rem; white-space: pre-wrap; }
       dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; }
       dt { color: var(--muted); }
@@ -29,7 +30,12 @@
         <p class="label">المرجع (الفاتحة):</p>
         <p class="arabic reference" id="ref"></p>
       </section>
-      <button class="btn" id="rec" disabled>تسجيل</button>
+      <div class="row">
+        <button class="btn" id="rec" disabled>تسجيل</button>
+        <button class="btn secondary" id="load" disabled>تحميل ملف صوت</button>
+        <input type="file" id="file" accept="audio/*" hidden />
+      </div>
+      <p class="hint" id="fileInfo"></p>
       <p class="feedback warn" id="err"></p>
       <h2>النص المسموع</h2>
       <p class="arabic reference" id="transcript">—</p>
@@ -40,7 +46,7 @@
     <script type="module">
       import fajr from "/src/content/fajr.json";
       import { ASR_MODEL_ID } from "/src/config.js";
-      import { preloadASR, startRecording, transcribe, compareRecitation } from "/src/speech/index.js";
+      import { preloadASR, startRecording, decodeAudioBlob, transcribe, compareRecitation } from "/src/speech/index.js";
 
       const $ = (id) => document.getElementById(id);
       const REF = fajr.steps.find((s) => s.id === "fatiha").reference;
@@ -58,8 +64,25 @@
           $("loadTime").textContent = ((performance.now() - t0) / 1000).toFixed(1) + " ث";
           $("progress").textContent = "جاهز ✓";
           $("rec").disabled = false;
+          $("load").disabled = false;
         })
         .catch((e) => ($("err").textContent = "فشل تحميل النموذج: " + e.message));
+
+      // نفس التحليل للتسجيل المباشر وللملف: تفريغ ← مقارنة ← طباعة النتائج.
+      async function analyze(audio) {
+        const seconds = (audio.length / 16000).toFixed(1);
+        const t1 = performance.now();
+        const text = await transcribe(audio, REF);
+        const dt = (performance.now() - t1) / 1000;
+        $("txTime").textContent = `${dt.toFixed(1)} ث لتسجيل مدته ${seconds} ث`;
+        $("transcript").textContent = text || "(فاضي)";
+        $("result").textContent = JSON.stringify(compareRecitation(text, REF), null, 2);
+      }
+
+      const setBusy = (busy) => {
+        $("rec").disabled = busy;
+        $("load").disabled = busy;
+      };
 
       let recording = null;
       $("rec").onclick = async () => {
@@ -69,6 +92,7 @@
           try {
             recording = await startRecording();
             btn.textContent = "إيقاف";
+            $("load").disabled = true;
           } catch (e) {
             $("err").textContent = "ما قدرنا نشغل المايك: " + e.message;
           }
@@ -76,23 +100,43 @@
         }
         const rec = recording;
         recording = null;
-        btn.disabled = true;
+        setBusy(true);
         btn.textContent = "جاري التفريغ…";
         try {
-          const audio = await rec.stop();
-          const seconds = (audio.length / 16000).toFixed(1);
-          const t1 = performance.now();
-          const text = await transcribe(audio, REF);
-          const dt = (performance.now() - t1) / 1000;
-          $("txTime").textContent = `${dt.toFixed(1)} ث لتسجيل مدته ${seconds} ث`;
-          $("transcript").textContent = text || "(فاضي)";
-          $("result").textContent = JSON.stringify(compareRecitation(text, REF), null, 2);
+          await analyze(await rec.stop());
         } catch (e) {
           console.error(e);
           $("err").textContent = "خطأ: " + e.message;
         } finally {
-          btn.disabled = false;
+          setBusy(false);
           btn.textContent = "تسجيل";
+        }
+      };
+
+      // ملف صوت من جهازك: يتفك ترميزه داخل المتصفح (16 كيلوهرتز، قناة وحدة) بدون رفع أو تخزين.
+      $("load").onclick = () => $("file").click();
+      $("file").onchange = async () => {
+        const file = $("file").files[0];
+        $("file").value = ""; // عشان لو اخترتي نفس الملف مرة ثانية يشتغل
+        if (!file) return;
+        $("err").textContent = "";
+        $("fileInfo").textContent = `الملف: ${file.name}`;
+        setBusy(true);
+        $("load").textContent = "جاري التفريغ…";
+        try {
+          const t0 = performance.now();
+          const audio = await decodeAudioBlob(file).catch((e) => {
+            throw new Error("المتصفح ما قدر يفك ترميز هذا الملف (جربي m4a أو mp3 أو wav أو webm): " + e.message);
+          });
+          const decodeSec = ((performance.now() - t0) / 1000).toFixed(1);
+          $("fileInfo").textContent = `الملف: ${file.name} · فك الترميز: ${decodeSec} ث`;
+          await analyze(audio);
+        } catch (e) {
+          console.error(e);
+          $("err").textContent = e.message.startsWith("المتصفح") ? e.message : "خطأ: " + e.message;
+        } finally {
+          setBusy(false);
+          $("load").textContent = "تحميل ملف صوت";
         }
       };
     </script>

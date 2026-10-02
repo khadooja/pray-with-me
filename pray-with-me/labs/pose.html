@@ -9,6 +9,9 @@
       .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
       select { min-height: 52px; font: inherit; padding: 8px 12px; border-radius: 10px; }
       pre { direction: ltr; text-align: left; background: var(--card); padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 0.9rem; }
+      .seek { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+      .seek input[type="range"] { flex: 1; min-height: 32px; direction: ltr; }
+      .seek span { direction: ltr; min-width: 9em; text-align: center; color: var(--muted); font-size: 0.9rem; }
     </style>
   </head>
   <body>
@@ -17,6 +20,7 @@
       <p class="hint">
         الهدف: ضبط الأرقام في <code dir="ltr">src/pose/rules/thresholds.js</code>.
         حطي الجوال على الأرض على بعد مترين تقريباً من جنبك، وجربي الوضعية الصحيحة والخاطئة وسجلي الأرقام.
+        تقدرين بدل الكاميرا تحمّلين فيديو مسجّل من جهازك: يتشغل داخل المتصفح فقط ولا يُرفع ولا يُخزّن.
       </p>
       <div class="row">
         <label>الوضعية:
@@ -27,58 +31,202 @@
           </select>
         </label>
         <button class="btn" id="cam">تشغيل الكاميرا</button>
+        <button class="btn secondary" id="load">تحميل ملف فيديو</button>
+        <input type="file" id="file" accept="video/*" hidden />
       </div>
       <p class="feedback warn" id="err"></p>
       <div class="stage">
         <video playsinline muted></video>
         <canvas></canvas>
       </div>
+      <div class="row">
+        <button class="btn secondary" id="play" disabled>تشغيل</button>
+        <button class="btn secondary" id="copy">نسخ القيم الحالية</button>
+        <span id="copied" class="feedback ok"></span>
+      </div>
+      <div class="seek">
+        <input type="range" id="seek" min="0" max="1000" value="0" disabled aria-label="موضع الفيديو" />
+        <span id="time">—</span>
+      </div>
       <pre id="out">—</pre>
     </main>
 
     <script type="module">
-      import { startCamera, runPoseLoop, shouldMirror } from "/src/pose/detector.js";
+      import { startCamera, stopCamera, runPoseLoop, shouldMirror } from "/src/pose/detector.js";
       import { evaluatePose, pickSide, inclineFromHorizontal, angleAt, THRESHOLDS } from "/src/pose/index.js";
 
+      const $ = (id) => document.getElementById(id);
       const video = document.querySelector("video");
       const canvas = document.querySelector("canvas");
-      const out = document.getElementById("out");
-      const stepSel = document.getElementById("step");
-      const btn = document.getElementById("cam");
-      const err = document.getElementById("err");
+      const stage = document.querySelector(".stage");
+      const out = $("out");
+      const stepSel = $("step");
+      const err = $("err");
       const r = (n) => (n == null ? null : Math.round(n * 100) / 100);
 
-      btn.onclick = async () => {
-        btn.disabled = true;
+      // ---- القراءة الحية: نفس الحسابات اللي كانت موجودة، بس داخل دالة عشان نعيد استخدامها ----
+      // نحفظ آخر إطار عشان لو غيّرتي الوضعية من القائمة نعيد التقييم على نفس الإطار.
+      let lastLm = null;
+      let lastAspect = 1;
+      let hasFrame = false;
+
+      function render(lm, aspect) {
+        lastLm = lm;
+        lastAspect = aspect;
+        hasFrame = true;
+        const stepId = stepSel.value;
+        const data = { step: stepId, aspect: r(aspect), thresholds: THRESHOLDS[stepId] };
+        if (lm) {
+          const s = pickSide(lm);
+          data.torsoIncline = r(inclineFromHorizontal(s.shoulder, s.hip, aspect));
+          data.kneeAngle = r(angleAt(s.hip, s.knee, s.ankle, aspect));
+          data.noseY = r(s.nose.y);
+          data.hipY = r(s.hip.y);
+          data.visibility = {
+            shoulder: r(s.shoulder.visibility), hip: r(s.hip.visibility),
+            knee: r(s.knee.visibility), ankle: r(s.ankle.visibility), nose: r(s.nose.visibility),
+          };
+        } else {
+          data.landmarks = null;
+        }
+        data.result = evaluatePose(lm, stepId, aspect);
+        out.textContent = JSON.stringify(data, null, 2);
+      }
+      stepSel.onchange = () => hasFrame && render(lastLm, lastAspect);
+
+      // ---- المصدر الحالي (كاميرا أو ملف) ----
+      let stream = null;
+      let stopLoop = null;
+      let objectUrl = null;
+      let gen = 0; // رقم المحاولة: لو تغيّر المصدر أثناء تحميل النموذج نوقف الحلقة المتأخرة
+
+      // يوقف كل شيء ويحرر الموارد، ويلغي رابط الملف القديم (revokeObjectURL).
+      function stopSource() {
+        gen++;
+        stopLoop?.();
+        stopLoop = null;
+        stopCamera(stream);
+        stream = null;
+        video.pause();
+        video.srcObject = null;
+        video.removeAttribute("src");
+        video.load();
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        objectUrl = null;
+        hasFrame = false;
+        out.textContent = "—";
+        $("play").disabled = true;
+        $("seek").disabled = true;
+        $("seek").value = 0;
+        $("time").textContent = "—";
+      }
+
+      async function beginLoop(myGen) {
+        const stop = await runPoseLoop(video, canvas, render);
+        if (myGen !== gen) stop(); // تغيّر المصدر وإحنا ننتظر النموذج
+        else stopLoop = stop;
+      }
+
+      $("cam").onclick = async () => {
+        stopSource();
+        const myGen = gen;
         err.textContent = "";
+        $("cam").disabled = true;
         try {
-          const stream = await startCamera(video);
-          video.parentElement.classList.toggle("mirrored", shouldMirror(stream));
-          await runPoseLoop(video, canvas, (lm, aspect) => {
-            const stepId = stepSel.value;
-            const data = { step: stepId, aspect: r(aspect), thresholds: THRESHOLDS[stepId] };
-            if (lm) {
-              const s = pickSide(lm);
-              data.torsoIncline = r(inclineFromHorizontal(s.shoulder, s.hip, aspect));
-              data.kneeAngle = r(angleAt(s.hip, s.knee, s.ankle, aspect));
-              data.noseY = r(s.nose.y);
-              data.hipY = r(s.hip.y);
-              data.visibility = {
-                shoulder: r(s.shoulder.visibility), hip: r(s.hip.visibility),
-                knee: r(s.knee.visibility), ankle: r(s.ankle.visibility), nose: r(s.nose.visibility),
-              };
-            } else {
-              data.landmarks = null;
-            }
-            data.result = evaluatePose(lm, stepId, aspect);
-            out.textContent = JSON.stringify(data, null, 2);
-          });
-          btn.textContent = "الكاميرا شغالة";
+          const s = await startCamera(video);
+          if (myGen !== gen) return stopCamera(s);
+          stream = s;
+          stage.classList.toggle("mirrored", shouldMirror(s));
+          await beginLoop(myGen);
+          $("cam").textContent = "الكاميرا شغالة";
         } catch (e) {
           console.error(e);
           err.textContent = "ما قدرنا نشغل الكاميرا أو النموذج: " + (e?.message || e);
-          btn.disabled = false;
+        } finally {
+          $("cam").disabled = false;
         }
+      };
+
+      // ---- ملف فيديو من الجهاز: يتشغل بنفس عنصر الفيديو ونفس حلقة الوضعيات ----
+      $("load").onclick = () => $("file").click();
+      $("file").onchange = async () => {
+        const file = $("file").files[0];
+        $("file").value = ""; // عشان لو اخترتي نفس الملف مرة ثانية يشتغل
+        if (!file) return;
+        stopSource();
+        const myGen = gen;
+        err.textContent = "";
+        $("cam").textContent = "تشغيل الكاميرا";
+        stage.classList.remove("mirrored"); // الملف مو سيلفي، فما نقلبه
+        objectUrl = URL.createObjectURL(file);
+        video.muted = true;
+        video.src = objectUrl;
+        $("play").disabled = false;
+        $("seek").disabled = false;
+        try {
+          // نحمّل نموذج الوضعيات أول ثم نشغّل الفيديو، عشان المقطع القصير ما يخلص قبل ما النموذج يجهز.
+          await beginLoop(myGen);
+          if (myGen !== gen) return;
+          await video.play().catch(() => {}); // لو المتصفح رفض التشغيل، زر "تشغيل" موجود
+        } catch (e) {
+          console.error(e);
+          err.textContent = "ما قدرنا نشغل النموذج: " + (e?.message || e);
+        }
+      };
+      video.addEventListener("error", () => {
+        if (!objectUrl) return; // خطأ من الكاميرا أو من تنظيف المصدر، مو من الملف
+        err.textContent = "المتصفح ما قدر يفتح هذا الفيديو. جربي mp4 (H.264).";
+        $("play").disabled = true;
+        $("seek").disabled = true;
+      });
+
+      // ---- تشغيل/إيقاف وشريط التنقل (للملف فقط) ----
+      const syncPlay = () => ($("play").textContent = video.paused || video.ended ? "تشغيل" : "إيقاف مؤقت");
+      video.addEventListener("play", syncPlay);
+      video.addEventListener("pause", syncPlay);
+      video.addEventListener("ended", syncPlay);
+      $("play").onclick = () => (video.paused || video.ended ? video.play().catch(() => {}) : video.pause());
+
+      let seeking = false;
+      const fmt = (x) => (Number.isFinite(x) ? x.toFixed(1) : "—");
+      const showTime = () => ($("time").textContent = `${fmt(video.currentTime)} / ${fmt(video.duration)} ث`);
+      video.addEventListener("timeupdate", () => {
+        if (!objectUrl) return;
+        showTime();
+        if (!seeking && video.duration) $("seek").value = (video.currentTime / video.duration) * 1000;
+      });
+      $("seek").oninput = () => {
+        seeking = true;
+        if (video.duration) video.currentTime = ($("seek").value / 1000) * video.duration;
+      };
+      $("seek").onchange = () => (seeking = false);
+
+      // ---- نسخ القيم الحالية (نفس الـ JSON اللي تشوفينه) ----
+      $("copy").onclick = async () => {
+        const text = out.textContent;
+        if (!hasFrame) {
+          $("copied").textContent = "";
+          err.textContent = "ما فيه قيم للنسخ بعد. شغّلي الكاميرا أو حمّلي فيديو أول.";
+          return;
+        }
+        err.textContent = "";
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          // السياق مو آمن (مو localhost/https)؟ نستخدم الطريقة القديمة
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand("copy");
+          ta.remove();
+          if (!ok) {
+            err.textContent = "ما قدرنا ننسخ. حددي النص وانسخيه يدوياً.";
+            return;
+          }
+        }
+        $("copied").textContent = "تم النسخ ✓";
+        setTimeout(() => ($("copied").textContent = ""), 1500);
       };
     </script>
   </body>

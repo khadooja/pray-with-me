@@ -74,11 +74,7 @@ export async function startRecording() {
       recorder.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
         try {
-          const blob = new Blob(chunks, { type: recorder.mimeType });
-          const ctx = new AudioContext({ sampleRate: 16000 });
-          const decoded = await ctx.decodeAudioData(await blob.arrayBuffer());
-          ctx.close();
-          resolve(toMono(decoded));
+          resolve(await decodeAudioBlob(new Blob(chunks, { type: recorder.mimeType })));
         } catch (err) {
           reject(err);
         }
@@ -87,6 +83,18 @@ export async function startRecording() {
     });
   }
   return { stop };
+}
+
+// Decodes any audio Blob/File the browser understands into mono Float32 audio at 16000 Hz
+// (what Whisper expects). Shared by recording and by the lab page's "load audio file".
+// The data stays in the browser.
+export async function decodeAudioBlob(blob) {
+  const ctx = new AudioContext({ sampleRate: 16000 });
+  try {
+    return toMono(await ctx.decodeAudioData(await blob.arrayBuffer()));
+  } finally {
+    ctx.close();
+  }
 }
 
 function toMono(buffer) {
