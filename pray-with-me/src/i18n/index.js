@@ -17,6 +17,12 @@ export function getLang() {
   return currentLang;
 }
 
+// هل المفتاح موجود؟ نستخدمها للنصوص الاختيارية (مثل شرح كل خطوة explain_*):
+// إذا ما كان موجود نخفي السطر بدل ما نطبع اسم المفتاح للمستخدم.
+export function has(key) {
+  return key in dictionaries[FALLBACK] || key in (dictionaries[currentLang] ?? {});
+}
+
 // t("knees_bent") → النص المناسب. إذا المفتاح ناقص نرجع للإنجليزي، ثم للمفتاح نفسه.
 // المتغيرات: t("step_of", { x: 1, n: 5 }) تبدّل {x} و {n} داخل النص.
 export function t(key, vars) {

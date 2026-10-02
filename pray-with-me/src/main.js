@@ -3,7 +3,7 @@
 // returns a cleanup function that go() calls before showing another step.
 import fajr from "./content/fajr.json";
 import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS } from "./config.js";
-import { t } from "./i18n/index.js";
+import { t, has } from "./i18n/index.js";
 import { recordAttempt } from "./progress/store.js";
 import { evaluatePose, resetPoseMock } from "./pose/index.js";
 import { startCamera, stopCamera, runPoseLoop, shouldMirror } from "./pose/detector.js";
@@ -11,6 +11,7 @@ import { preloadASR, startRecording, transcribe, compareRecitation } from "./spe
 import { unlockAudio, playSuccess, playHint, vibrateSuccess } from "./ui/sound.js";
 import { renderSetup } from "./ui/setup.js";
 import { videoCard, setupVideo } from "./ui/video.js";
+import { showSuccessSheet, showConfirmSheet, dismissSheet } from "./ui/sheet.js";
 
 const steps = fajr.steps;
 const app = document.getElementById("app");
@@ -27,6 +28,7 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 function go(i) {
+  dismissSheet(); // a sheet must never linger onto the next step
   cleanup?.();
   cleanup = null;
   current = Math.max(0, Math.min(i, steps.length));
@@ -43,6 +45,7 @@ function showSetup(i, onBack) {
   current = i;
   window.scrollTo(0, 0);
   app.innerHTML = `${header()}<section id="setup"></section>${footer()}`;
+  wireClose();
   renderSetup(app.querySelector("#setup"), {
     onReady: () => {
       setupSeen = true;
@@ -54,12 +57,46 @@ function showSetup(i, onBack) {
 
 // ---------- layout ----------
 
-function header() {
+// Top bar: close button + progress bar. The "Step X of N" wording is no longer
+// shown, but it stays as the progress bar's aria-label for screen readers.
+function header({ progress = true, close = true } = {}) {
+  const n = steps.length;
+  const x = Math.min(current + 1, n);
   return `
     <header class="top">
-      <span class="step-count">${esc(t("step_of", { x: current + 1, n: steps.length }))}</span>
+      ${close ? `<button type="button" class="icon-btn" id="close" aria-label="${esc(t("close"))}">✕</button>` : ""}
+      ${
+        progress
+          ? `<div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="${n}" aria-valuenow="${x}"
+               aria-label="${esc(t("step_of", { x, n }))}"><div class="progress-fill" style="width:${(x / n) * 100}%"></div></div>`
+          : ""
+      }
       ${USE_MOCK ? `<span class="badge">${esc(t("mock_mode"))}</span>` : ""}
     </header>`;
+}
+
+// Wires the close button, if the rendered header has one.
+function wireClose() {
+  const btn = app.querySelector("#close");
+  if (!btn) return;
+  btn.onclick = () =>
+    showConfirmSheet({
+      title: t("close_confirm_title"),
+      text: t("close_confirm_text"),
+      cancelLabel: t("stay"),
+      confirmLabel: t("leave"),
+      onConfirm: () => go(0),
+    });
+}
+
+// The sheet that slides up after a step is passed. Guided steps never call this.
+// The explaining sentence is optional: a step without an explain_* key just omits it.
+function celebrate(key) {
+  showSuccessSheet({
+    title: t("success_title"),
+    text: has(`explain_${key}`) ? t(`explain_${key}`) : "",
+    onContinue: () => go(current + 1),
+  });
 }
 
 function footer() {
@@ -83,19 +120,21 @@ function renderStep(step) {
   const isLast = current === steps.length - 1;
   app.innerHTML = `
     ${header()}
+    ${current > 0 ? `<button type="button" class="link back-link" id="back">‹ ${esc(t("back"))}</button>` : ""}
     <h1>${esc(step.title.en)} <span class="ar" dir="rtl" lang="ar">${esc(step.title.ar)}</span></h1>
     <p class="instruction">${esc(step.instruction.en)}</p>
     ${step.type === "pose" ? `<p class="checks">${esc(t(`checks_${step.check}`))}</p>` : ""}
     ${videoCard(step)}
     ${dhikrCard(step.dhikr, Boolean(step.video))}
     <section class="practice" id="practice"></section>
-    <nav class="nav">
-      <button class="btn secondary" id="back" ${current === 0 ? "disabled" : ""}>${esc(t("back"))}</button>
-      <button class="btn" id="next">${esc(t(isLast ? "finish" : "next"))}</button>
-    </nav>
-    ${footer()}`;
+    ${footer()}
+    <div class="bottom-spacer"></div>
+    <div class="bottom-bar">
+      <button class="btn block" id="next">${esc(t(isLast ? "finish" : "next"))}</button>
+    </div>`;
 
-  app.querySelector("#back").onclick = () => go(current - 1);
+  wireClose();
+  if (current > 0) app.querySelector("#back").onclick = () => go(current - 1);
   app.querySelector("#next").onclick = () => go(current + 1);
 
   const video = setupVideo(app);
@@ -114,7 +153,7 @@ function renderStep(step) {
 
 function renderFinished() {
   app.innerHTML = `
-    <header class="top">${USE_MOCK ? `<span class="badge">${esc(t("mock_mode"))}</span>` : ""}</header>
+    ${header({ progress: false, close: false })}
     <h1>${esc(t("finished_title"))}</h1>
     <p class="instruction">${esc(t("finished_text"))}</p>
     <nav class="nav"><button class="btn" id="again">${esc(t("start_again"))}</button></nav>
@@ -187,6 +226,7 @@ function renderPose(step, root) {
       recordAttempt(step.id, true);
       stopLoop?.();
       stopLoop = null;
+      celebrate(step.check);
     } else {
       setFeedback(t("pose_ok"), "ok");
     }
@@ -330,6 +370,7 @@ function renderSpeech(step, root) {
       recordAttempt(step.id, result.complete);
       if (result.complete) {
         setFeedback(esc(t("speech_complete")), "ok");
+        celebrate(step.id);
       } else if (!result.orderOk) {
         setFeedback(esc(t("speech_order")), "warn");
       } else {

@@ -19,6 +19,18 @@
   "start_again": "Start again",
   "finished_title": "You completed one rakah of Fajr practice!",
   "finished_text": "May Allah accept from you. Practice again any time.",
+  "close": "Close practice",
+  "close_confirm_title": "Leave practice?",
+  "close_confirm_text": "You'll start over from the first step.",
+  "stay": "Stay",
+  "leave": "Leave",
+  "success_title": "Correct!",
+  "continue": "Continue",
+  "explain_standing": "Your back was upright and your knees were straight.",
+  "explain_ruku": "Your back was level with the floor and your knees straight.",
+  "explain_sujood": "Your head was lower than your hips, so you were down in sujood.",
+  "explain_fatiha": "You recited all of Al-Fatihah, in the right order.",
+
   "footer": "This app checks posture and completeness of recitation only. It does not assess tajweed or rule on the validity of prayer. Your camera and microphone data never leave your device.",
 
   "setup_title": "Set up your camera",
