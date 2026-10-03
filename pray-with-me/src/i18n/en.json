@@ -9,7 +9,6 @@
   "speech_complete": "Well done! You recited Al-Fatihah completely and in order.",
   "speech_missing": "Good effort! It seems a few words were missed. Try again, gently:",
   "speech_order": "Good effort! Some verses seem to be out of order. Try again, slowly.",
-
   "app_title": "Pray With Me",
   "step_of": "Step {x} of {n}",
   "mock_mode": "MOCK MODE",
@@ -30,9 +29,7 @@
   "explain_ruku": "Your back was level with the floor and your knees straight.",
   "explain_sujood": "Your head was lower than your hips, so you were down in sujood.",
   "explain_fatiha": "You recited all of Al-Fatihah, in the right order.",
-
   "footer": "This app checks posture and completeness of recitation only. It does not assess tajweed or rule on the validity of prayer. Your camera and microphone data never leave your device.",
-
   "setup_title": "Set up your camera",
   "setup_side": "Place your phone or laptop on the floor, about 2 meters to your SIDE, not in front of you. You keep facing forward as usual.",
   "setup_steady": "Lean it against a wall or a book so it stays steady.",
@@ -43,7 +40,6 @@
   "test_sound": "Test sound",
   "im_ready": "I'm ready",
   "setup_help": "Setup help",
-
   "camera_hint": "Phone on the floor, about 2 meters to your side. Listen for the chime: it means your position is right.",
   "start_camera": "Start camera",
   "camera_starting": "Starting the camera and loading the pose model…",
@@ -52,18 +48,26 @@
   "camera_error": "The camera could not be started. Please try again.",
   "mock_no_camera": "Mock mode: the camera is off and feedback is simulated.",
   "pose_model_error": "The pose model could not be loaded. Check your internet connection and try again.",
-
   "checks_standing": "Checked: your back is upright and your knees are straight. Not checked: hand position.",
   "checks_ruku": "Checked: your back is level and your knees are straight. Not checked: hand position (hands on knees).",
   "checks_sujood": "Checked: your head is lower than your hips. Not checked: palms, knees, toes, or forehead and nose touching the ground.",
-
   "video_label": "Demonstration video",
   "video_play": "Play",
   "video_pause": "Pause",
   "video_replay": "Replay",
   "video_speed": "{x}x",
   "video_speed_label": "Playback speed",
-
+  "figure_label": "Illustration of the position",
+  "figure_replay": "Replay",
+  "figure_speed": "{x}x",
+  "figure_speed_label": "Animation speed",
+  "figure_pair_badge": "×2",
+  "figure_seven_points": "7 points touch the ground: 1 forehead and nose, 2–3 palms, 4–5 knees, 6–7 toes.",
+  "figure_diagram_title": "Seven points that touch the ground",
+  "figure_alt_takbir": "Side view of a person standing on a prayer mat, both hands raised beside the head with the palms facing forward.",
+  "figure_alt_standing": "Side view of a person standing upright on a prayer mat, hands folded on the chest.",
+  "figure_alt_ruku": "Side view of a person bowing, the back level with the floor, legs straight and both palms resting on the knees.",
+  "figure_alt_sujood": "Prostration seen from the front: the person faces you with the forehead and nose on the mat, a palm flat on the mat on each side of the head, elbows raised and angled outward, knees apart on the mat and the toes of both feet on the mat further back. The seven contact points are numbered 1 to 7.",
   "recite_this": "Recite:",
   "start_reciting": "Start reciting",
   "done_reciting": "Done",

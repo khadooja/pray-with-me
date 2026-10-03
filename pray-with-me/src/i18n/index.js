@@ -3,7 +3,7 @@
 //   1) أنشئ ملف ar.json بنفس المفاتيح الموجودة في en.json
 //   2) استورده هنا وأضفه إلى dictionaries
 //   3) استدعِ setLang("ar")
-import en from "./en.json";
+import en from "./en.json" with { type: "json" };
 
 const dictionaries = { en };
 const FALLBACK = "en";

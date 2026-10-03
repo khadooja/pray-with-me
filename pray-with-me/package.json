@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node tests/align.test.mjs"
+    "test": "node tests/align.test.mjs && node tests/figure.test.mjs && node tests/figure-nav.test.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.0.0",

@@ -11,6 +11,7 @@ import { preloadASR, startRecording, transcribe, compareRecitation } from "./spe
 import { unlockAudio, playSuccess, playHint, vibrateSuccess } from "./ui/sound.js";
 import { renderSetup } from "./ui/setup.js";
 import { videoCard, setupVideo } from "./ui/video.js";
+import { figureCard, diagramCard, setupFigure } from "./figure/figure.js";
 import { showSuccessSheet, showConfirmSheet, dismissSheet } from "./ui/sheet.js";
 
 const steps = fajr.steps;
@@ -116,6 +117,14 @@ function dhikrCard(d, hasVideo = false) {
     </section>`;
 }
 
+// A step shows its demo video when it has one, otherwise the drawn figure.
+// Sujood is the exception: the seven-points diagram is reference material, so it
+// stays below the video rather than being replaced by it.
+function mediaFor(step) {
+  const video = videoCard(step);
+  return video ? video + diagramCard(step) : figureCard(step);
+}
+
 function renderStep(step) {
   const isLast = current === steps.length - 1;
   app.innerHTML = `
@@ -124,7 +133,7 @@ function renderStep(step) {
     <h1>${esc(step.title.en)} <span class="ar" dir="rtl" lang="ar">${esc(step.title.ar)}</span></h1>
     <p class="instruction">${esc(step.instruction.en)}</p>
     ${step.type === "pose" ? `<p class="checks">${esc(t(`checks_${step.check}`))}</p>` : ""}
-    ${videoCard(step)}
+    ${mediaFor(step)}
     ${dhikrCard(step.dhikr, Boolean(step.video))}
     <section class="practice" id="practice"></section>
     ${footer()}
@@ -137,7 +146,19 @@ function renderStep(step) {
   if (current > 0) app.querySelector("#back").onclick = () => go(current - 1);
   app.querySelector("#next").onclick = () => go(current + 1);
 
-  const video = setupVideo(app);
+  // If the video file turns out to be broken, swap the full animated figure in.
+  let figure = setupFigure(app);
+  const video = setupVideo(app, {
+    onError: () => {
+      figure.dispose();
+      // drop the static diagram first, so we don't end up with two figure cards
+      app.querySelector("[data-diagram]")?.remove();
+      // the figure belongs above the dhikr card, in the slot the video just vacated
+      const slot = app.querySelector(".dhikr") || app.querySelector("#practice");
+      slot?.insertAdjacentHTML("beforebegin", figureCard(step));
+      figure = setupFigure(app);
+    },
+  });
   currentVideo = video;
 
   const practice = app.querySelector("#practice");
@@ -146,6 +167,7 @@ function renderStep(step) {
   else if (step.type === "speech") stepCleanup = renderSpeech(step, practice);
   cleanup = () => {
     video.dispose();
+    figure.dispose();
     if (currentVideo === video) currentVideo = null;
     stepCleanup?.();
   };

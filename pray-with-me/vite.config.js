@@ -12,6 +12,7 @@ export default defineConfig({
         main: page("./index.html"),
         labPose: page("./labs/pose.html"),
         labSpeech: page("./labs/speech.html"),
+        labFigure: page("./labs/figure.html"),
       },
     },
   },

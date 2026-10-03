@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مراجعة الأشكال التوضيحية | Pray With Me</title>
+    <link rel="stylesheet" href="/src/ui/style.css" />
+    <style>
+      #app { max-width: 1100px; }
+      .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 28px; }
+      .cell h3 { margin: 0 0 6px; font-size: 1rem; }
+      .cell .figure-card { margin: 0; }
+      .editor { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+      .sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 20px; }
+      .slider { display: grid; grid-template-columns: 8.5em 1fr 4em; gap: 8px; align-items: center; font-size: 0.9rem; }
+      .slider input { direction: ltr; min-height: 30px; }
+      .slider code { direction: ltr; text-align: left; color: var(--muted); }
+      .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+      select { min-height: 48px; font: inherit; padding: 6px 12px; border-radius: 10px; }
+      pre { direction: ltr; text-align: left; background: var(--bg); padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 0.85rem; white-space: pre-wrap; }
+      .facts { direction: ltr; text-align: left; font-size: 0.85rem; }
+      .facts .bad { color: var(--warn); font-weight: 700; }
+      .facts .good { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <main id="app">
+      <h1>مراجعة الأشكال التوضيحية</h1>
+      <p class="hint">
+        الهدف: نراجع الوضعيات مع المختصة الشرعية ونعدّلها على طول.
+        حرّكي المسرّعات، وراقبي القياسات تحتها، وإذا صار الشكل صحيح اضغطي
+        «نسخ بيانات الوضعية» وألصقيها في <code dir="ltr">src/figure/poses.js</code>.
+        التعديل هنا <strong>مؤقت</strong> ولا يُحفظ تلقائياً.
+      </p>
+
+      <h2>كل الوضعيات</h2>
+      <div class="gallery" id="gallery"></div>
+
+      <h2>تعديل وضعية</h2>
+      <div class="row">
+        <label>الوضعية: <select id="pick"></select></label>
+        <button class="btn secondary" id="reset">إرجاع الأصل</button>
+        <button class="btn" id="copy">نسخ بيانات الوضعية</button>
+        <span class="feedback ok" id="copied"></span>
+      </div>
+      <div class="editor">
+        <div class="gallery" style="grid-template-columns: minmax(280px, 420px); margin-bottom: 16px">
+          <div class="cell"><div id="editCard"></div></div>
+        </div>
+        <div class="facts" id="facts"></div>
+      </div>
+      <div class="editor">
+        <div class="sliders" id="sliders"></div>
+      </div>
+      <h2>البيانات</h2>
+      <pre id="out"></pre>
+    </main>
+
+    <script type="module">
+      import { POSES } from "/src/figure/poses.js";
+      import { drawPose, drawSujoodFront } from "/src/figure/figure.js";
+      import { VIEW, jointsFor, angleAt, inclineFromHorizontal, ANGLE_KEYS } from "/src/figure/kinematics.js";
+
+      const $ = (id) => document.getElementById(id);
+      const F = VIEW.floorY;
+      const names = Object.keys(POSES);
+      // نسخة قابلة للتعديل (ما نلمس الملف الأصلي)
+      const edited = Object.fromEntries(names.map((n) => [n, { ...POSES[n].angles }]));
+
+      function cardHTML(name, angles) {
+        const { viewBox, svg } = drawPose(name, angles, POSES[name].armScale ?? 1);
+        return `<section class="figure-card">
+          <svg class="fig-svg" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${name}">${svg}</svg>
+        </section>`;
+      }
+
+      // المعرض: كل الوضعيات جنب بعض، والتوضيحات ظاهرة دايماً
+      // بطاقة المنظر الأمامي للسجود (رسمة مستقلة، مو من سلسلة المفاصل)
+      function frontCardHTML() {
+        const { viewBox, svg } = drawSujoodFront();
+        return `<section class="figure-card">
+          <svg class="fig-svg" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="sujood front">${svg}</svg>
+        </section>`;
+      }
+
+      function renderGallery() {
+        $("gallery").innerHTML = names
+          .map((n) => `<div class="cell"><h3>${n}${n === "sujood" ? " (جانبي — يُستخدم في النزول)" : ""}</h3>${cardHTML(n, edited[n])}</div>`)
+          .join("") + `<div class="cell"><h3>sujood (أمامي — الوضع النهائي)</h3>${frontCardHTML()}</div>`;
+        $("gallery").querySelectorAll(".fig-highlights").forEach((g) => g.classList.add("show"));
+      }
+
+      // القياسات: نفس الحقائق اللي يتأكد منها tests/figure.test.mjs
+      function facts(name, angles) {
+        const j = jointsFor(angles, POSES[name].armScale ?? 1);
+        const rows = [];
+        const add = (label, value, ok) =>
+          rows.push(`<div><span class="${ok ? "good" : "bad"}">${ok ? "✓" : "✗"}</span> ${label}: <strong>${value}</strong></div>`);
+        const back = inclineFromHorizontal(j.hip, j.shoulder);
+        const kneeN = angleAt(j.hip, j.kneeNear, j.ankleNear);
+        if (name === "ruku") {
+          add("back from horizontal (needs &le;5&deg;)", back.toFixed(2) + "&deg;", back <= 5);
+          add("knee angle (needs &ge;170&deg;)", kneeN.toFixed(2) + "&deg;", kneeN >= 170);
+          add("hand to knee dy (needs &le;6px)", (j.wristNear.y - j.kneeNear.y).toFixed(2), Math.abs(j.wristNear.y - j.kneeNear.y) <= 6);
+          add("hand to knee dx (needs &le;10px)", (j.wristNear.x - j.kneeNear.x).toFixed(2), Math.abs(j.wristNear.x - j.kneeNear.x) <= 10);
+        } else if (name === "sujood") {
+          for (const k of ["forehead", "palmNear", "palmFar", "kneeNear", "kneeFar", "toeNear", "toeFar"]) {
+            const gap = j[k].y - F;
+            add(`${k} off floor (needs &le;2px)`, gap.toFixed(2), Math.abs(gap) <= 2);
+          }
+          add("hips above shoulders (needs &ge;15px)", (j.shoulder.y - j.hip.y).toFixed(1), j.shoulder.y - j.hip.y >= 15);
+          add("near elbow off floor (needs &ge;12px)", (F - j.elbowNear.y).toFixed(1), F - j.elbowNear.y >= 12);
+        } else {
+          const fromVert = 90 - back;
+          add("torso from vertical (needs &le;5&deg;)", fromVert.toFixed(2) + "&deg;", Math.abs(fromVert) <= 5);
+          add("toe off floor (needs &le;2px)", (j.toeNear.y - F).toFixed(2), Math.abs(j.toeNear.y - F) <= 2);
+          add("knee angle (needs &ge;170&deg;)", kneeN.toFixed(2) + "&deg;", kneeN >= 170);
+        }
+        return rows.join("");
+      }
+
+      function renderEditor() {
+        const name = $("pick").value;
+        const angles = edited[name];
+        $("editCard").innerHTML = cardHTML(name, angles);
+        $("editCard").querySelector(".fig-highlights")?.classList.add("show");
+        $("facts").innerHTML = facts(name, angles);
+        $("out").textContent = snippet(name);
+        for (const k of ANGLE_KEYS) {
+          const el = document.getElementById("v_" + k);
+          if (el) el.textContent = angles[k].toFixed(1);
+        }
+      }
+
+      function snippet(name) {
+        const a = edited[name];
+        const lines = ANGLE_KEYS.map((k) => `      ${k}: ${Math.round(a[k] * 10) / 10},`).join("\n");
+        // لازم ننسخ armScale معها، وإلا لصقها في poses.js يرجّع طول الذراع للافتراضي (1)
+        const scale = POSES[name].armScale;
+        const scaleLine = scale === undefined ? "" : `\n    armScale: ${scale},`;
+        return `  ${name}: {\n    angles: {\n${lines}\n    },${scaleLine}\n  },`;
+      }
+
+      // مسرّع لكل زاوية
+      function buildSliders() {
+        const name = $("pick").value;
+        $("sliders").innerHTML = ANGLE_KEYS.map(
+          (k) => `<label class="slider"><code>${k}</code>
+            <input type="range" min="-180" max="190" step="0.1" value="${edited[name][k]}" data-k="${k}" />
+            <code id="v_${k}">${edited[name][k].toFixed(1)}</code></label>`
+        ).join("");
+        $("sliders").querySelectorAll("input").forEach((inp) => {
+          inp.oninput = () => {
+            edited[$("pick").value][inp.dataset.k] = parseFloat(inp.value);
+            renderEditor();
+            renderGallery();
+          };
+        });
+      }
+
+      $("pick").innerHTML = names.map((n) => `<option>${n}</option>`).join("");
+      $("pick").value = "ruku";
+      $("pick").onchange = () => { buildSliders(); renderEditor(); };
+      $("reset").onclick = () => {
+        const n = $("pick").value;
+        edited[n] = { ...POSES[n].angles };
+        buildSliders();
+        renderEditor();
+        renderGallery();
+      };
+      $("copy").onclick = async () => {
+        const text = snippet($("pick").value);
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        }
+        $("copied").textContent = "تم النسخ ✓";
+        setTimeout(() => ($("copied").textContent = ""), 1500);
+      };
+
+      buildSliders();
+      renderEditor();
+      renderGallery();
+    </script>
+  </body>
+</html>

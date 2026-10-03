@@ -28,7 +28,8 @@ export function videoCard(step) {
 // يرجع { pause, dispose }: pause توقف الفيديو (مثلاً لما تشتغل الكاميرا)،
 // و dispose تنادونها عند مغادرة الخطوة (توقف الصوت وتوقف التحميل).
 // إذا ما فيه فيديو يرجع كائن فاضي آمن.
-export function setupVideo(root) {
+// onError: تُنادى إذا الملف ما انفتح، عشان main.js يعرض الشكل التوضيحي بدلاً منه.
+export function setupVideo(root, { onError } = {}) {
   const card = root.querySelector(".video-card");
   const noop = { pause() {}, dispose() {} };
   if (!card) return noop;
@@ -64,6 +65,7 @@ export function setupVideo(root) {
     if (disposed) return;
     card.remove();
     root.querySelector(".dhikr-audio")?.removeAttribute("hidden");
+    onError?.();
   });
 
   return {

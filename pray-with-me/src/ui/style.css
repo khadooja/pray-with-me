@@ -8,6 +8,15 @@
   --accent: #2ee6c0;
   --warn: #ffb86b;
   --radius: 14px;
+  /* الشكل التوضيحي للصلاة: لوحة فاتحة دائماً (مثل ورقة رسم) عشان يبيّن الشكل
+     بأعلى تباين على الجوال، في الوضع الفاتح والغامق. غيّروا هذي القيم فقط لو
+     حبيتوا تغيرون ألوان الرسمة. */
+  --figure-plate: #f4f1e8;
+  --figure: #1b2340;
+  --figure-far: #7c86a8;
+  --mat: #d8cfb4;
+  --mat-line: #a4906a;
+  --highlight: #d2452f;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", Tahoma, sans-serif;
   --font-ar: "Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Geeza Pro", serif;
 }
@@ -132,6 +141,98 @@ audio { width: 100%; margin-top: 8px; }
 .video-card.attached { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .video-card.attached + .dhikr { border-top-left-radius: 0; border-top-right-radius: 0; }
 
+/* ---- الشكل التوضيحي للصلاة (src/figure/) ---- */
+.figure-card {
+  background: var(--figure-plate);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 0 0 16px;
+}
+.figure-card.attached { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+/* فيديو فوق ومخطط السجود تحته: نلصقهم مثل بقية البطاقات */
+.video-card.attached + .figure-card { border-top-left-radius: 0; border-top-right-radius: 0; }
+.figure-card.attached + .dhikr { border-top-left-radius: 0; border-top-right-radius: 0; }
+
+.fig-svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+}
+
+/* الجذع المعبّأ (المنظر الأمامي): لازم يكون بلون الجسم، لا أسود */
+.fig-body { fill: var(--figure); }
+/* خط الظهر: يوضّح إن الشكل ظهر يرتفع من الكتفين إلى الوركين */
+.fig-spine { stroke: var(--figure-plate); stroke-width: 2; opacity: 0.35; fill: none; stroke-linecap: round; }
+
+/* الأعضاء القريبة والجسم */
+.fig-limb, .fig-torso { stroke: var(--figure); fill: none; stroke-linecap: round; }
+/* الأعضاء البعيدة: أبهت وتُرسم خلف الجسم */
+.fig-far { stroke: var(--figure-far); fill: none; stroke-linecap: round; }
+/* حدّ بلون اللوحة حول الأعضاء القريبة عشان تنفصل عن الجسم */
+.fig-outline { stroke: var(--figure-plate); fill: none; stroke-linecap: round; }
+/* الرأس: حدّ بلون اللوحة عشان يبيّن منفصلاً عن الذراع أو الجسم اللي خلفه */
+.fig-head { fill: var(--figure); stroke: var(--figure-plate); stroke-width: 2; }
+
+/* السجادة */
+.fig-mat-fill { fill: var(--mat); }
+.fig-mat-line { stroke: var(--mat-line); stroke-width: 2; vector-effect: non-scaling-stroke; }
+
+/* عنوان المخطط: يوضّح إن المنظر الأمامي "مرجع" لأعضاء السجود، مو رسمة شخص */
+.figure-diagram-label {
+  margin: 0;
+  padding: 10px 14px 2px;
+  color: var(--figure);
+  background: var(--figure-plate);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.figure-card.front-shown .figure-diagram-label { opacity: 1; }
+
+/* طبقتا الرسم: الجانبية والأمامية، والتلاشي بينهما عند نهاية النزول للسجود */
+.fig-layer { transition: opacity 0.5s ease; }
+.fig-front { opacity: 0; }
+
+/* أرقام أعضاء السجود السبعة (المنظر الأمامي) */
+.fig-num circle { fill: var(--highlight); stroke: var(--figure-plate); stroke-width: 2.5; }
+.fig-num text {
+  fill: var(--figure-plate);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* التوضيحات: تظهر بالتدريج بعد نهاية الحركة */
+.fig-highlights { opacity: 0; transition: opacity 0.35s ease; }
+.fig-highlights.show { opacity: 1; }
+.fig-dot { fill: var(--highlight); stroke: var(--figure-plate); stroke-width: 2.5; }
+/* النقطة البعيدة أبهت شوي عشان يبيّن إنها الجهة الثانية */
+.fig-dot-far { opacity: 0.6; }
+/* شارة ×2 للأعضاء المزدوجة */
+.fig-badge {
+  fill: var(--highlight);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--figure-plate);
+  stroke-width: 3.5;
+}
+.fig-guide { stroke: var(--highlight); stroke-width: 2.5; stroke-dasharray: 9 7; vector-effect: non-scaling-stroke; }
+.fig-level rect { fill: none; stroke: var(--highlight); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.fig-level circle { fill: var(--highlight); }
+
+.figure-caption {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
 .practice { margin: 0 0 16px; }
 
 .stage {
@@ -244,7 +345,7 @@ audio { width: 100%; margin-top: 8px; }
 .sheet-actions { display: flex; flex-direction: column; gap: 10px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .sheet, .sheet-backdrop, .progress-fill { transition: none; }
+  .sheet, .sheet-backdrop, .progress-fill, .fig-highlights { transition: none; }
 }
 
 .footer {
