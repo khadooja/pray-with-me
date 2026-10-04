@@ -76,6 +76,8 @@ h1 .ar { display: block; font-family: var(--font-ar); font-weight: 400; color: v
 
 .back-link { display: inline-block; margin: 4px 0 0; padding-left: 0; }
 .badge { background: var(--warn); color: #1a1a1a; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
+/* رقم الركعة الحالية، جنب شريط التقدّم */
+.rakah { flex: none; white-space: nowrap; color: var(--text); font-size: 0.8rem; font-weight: 700; }
 
 .instruction { margin: 0 0 16px; }
 /* What the camera checks / does not check on this pose step */
@@ -194,7 +196,22 @@ audio { width: 100%; margin-top: 8px; }
 
 /* طبقتا الرسم: الجانبية والأمامية، والتلاشي بينهما عند نهاية النزول للسجود */
 .fig-layer { transition: opacity 0.5s ease; }
-.fig-front { opacity: 0; }
+.fig-front, .fig-back { opacity: 0; }
+
+/* التسليم: ظل خفيف على قفا الرأس عشان الالتفات يبيّن كدوران، بدون أي ملامح وجه */
+.fig-head-shade { fill: #000; opacity: 0.26; }
+
+/* التسليم: السهم المنحني فوق الرأس وكلمة الاتجاه */
+.fig-turn-arrow { stroke: var(--highlight); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.fig-turn-label {
+  fill: var(--highlight);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--figure-plate);
+  stroke-width: 3.5;
+}
 
 /* أرقام أعضاء السجود السبعة (المنظر الأمامي) */
 .fig-num circle { fill: var(--highlight); stroke: var(--figure-plate); stroke-width: 2.5; }

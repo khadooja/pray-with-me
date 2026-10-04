@@ -6,7 +6,9 @@ import assert from "node:assert/strict";
 import { LIMBS, HEAD_R, VIEW, FRAME, jointsFor, lerpAngles, lowestY, angleAt, inclineFromHorizontal, measuredLimbs, ANGLE_KEYS }
   from "../src/figure/kinematics.js";
 import { POSES, ALL_POSES, POSE_FOR_STEP, pathBetween, durationFor,
-  SUJOOD_FRONT, frontPoints, isOnFrontMat, CROSSFADE_MS } from "../src/figure/poses.js";
+  SUJOOD_FRONT, frontPoints, isOnFrontMat, CROSSFADE_MS,
+  TASLIM_BACK, TASLIM_MS, taslimTurnAt, POSE_ALIAS } from "../src/figure/poses.js";
+import { drawTaslimBack, taslimBody } from "../src/figure/figure.js";
 
 let passed = 0;
 function test(name, fn) {
@@ -356,6 +358,137 @@ test("every frame of the sitting transitions keeps the toes on the mat, nothing 
       }
     }
   }
+});
+
+// ---------- taslim: the back view with the turning head ----------
+const sampleTurns = (n = 200) =>
+  Array.from({ length: n + 1 }, (_, i) => {
+    const ms = (TASLIM_MS * i) / n;
+    return { ms, ...taslimTurnAt(ms) };
+  });
+
+test("taslim: the head turns right first, then left, and ends facing forward", () => {
+  const s = sampleTurns();
+  const firstTurn = s.find((x) => Math.abs(x.turn) > 0.05);
+  assert.ok(firstTurn, "the head should turn at some point");
+  assert.ok(firstTurn.turn > 0, "the first turn must be to the RIGHT");
+
+  const lastTurn = [...s].reverse().find((x) => Math.abs(x.turn) > 0.05);
+  assert.ok(lastTurn.turn < 0, "the last turn must be to the LEFT");
+
+  // it reaches both extremes, and settles back to centre
+  assert.ok(Math.max(...s.map((x) => x.turn)) > 0.98, "the head should fully reach the right");
+  assert.ok(Math.min(...s.map((x) => x.turn)) < -0.98, "the head should fully reach the left");
+  assert.ok(Math.abs(taslimTurnAt(TASLIM_MS).turn) < 0.01, "it must finish facing forward");
+  assert.ok(Math.abs(taslimTurnAt(0).turn) < 0.01, "it must start facing forward");
+
+  // every right sample comes before every left sample
+  const lastRight = Math.max(...s.filter((x) => x.turn > 0.05).map((x) => x.ms));
+  const firstLeft = Math.min(...s.filter((x) => x.turn < -0.05).map((x) => x.ms));
+  assert.ok(lastRight < firstLeft, "the whole right turn must finish before the left begins");
+});
+
+test("taslim: the labels match the direction of the turn", () => {
+  for (const x of sampleTurns()) {
+    if (x.turn > 0.05) assert.equal(x.label, "taslim_right", `at ${x.ms}ms the head is right`);
+    if (x.turn < -0.05) assert.equal(x.label, "taslim_left", `at ${x.ms}ms the head is left`);
+  }
+  assert.equal(taslimTurnAt(0).label, null, "no label while facing forward");
+});
+
+test("taslim: each side is held for about 1.5 seconds", () => {
+  const s = sampleTurns(500);
+  const held = (sign) => {
+    const pts = s.filter((x) => Math.sign(x.turn) === sign && Math.abs(x.turn) > 0.99);
+    return pts.length ? Math.max(...pts.map((p) => p.ms)) - Math.min(...pts.map((p) => p.ms)) : 0;
+  };
+  assert.ok(held(1) >= 1400, `the right hold is only ${held(1).toFixed(0)}ms`);
+  assert.ok(held(-1) >= 1400, `the left hold is only ${held(-1).toFixed(0)}ms`);
+});
+
+test("taslim: the shoulders and body never move, only the head", () => {
+  const body = taslimBody();
+  for (const turn of [-1, -0.5, 0, 0.5, 1]) {
+    const svg = drawTaslimBack(turn, turn > 0 ? "taslim_right" : turn < 0 ? "taslim_left" : null).svg;
+    assert.ok(svg.startsWith(body),
+      `at turn ${turn} the body markup changed — the shoulders must stay still`);
+  }
+  // and the head really does move
+  const left = drawTaslimBack(-1).svg.slice(body.length);
+  const right = drawTaslimBack(1).svg.slice(body.length);
+  assert.notEqual(left, right, "the head should differ between the left and right turns");
+});
+
+test("taslim: the head shifts toward the turning side and narrows", () => {
+  const cxOf = (svg) => Number(/<ellipse class="fig-head" cx="([-\d.]+)"/.exec(svg)[1]);
+  const rxOf = (svg) => Number(/rx="([-\d.]+)"/.exec(svg)[1]);
+  const centre = drawTaslimBack(0).svg, right = drawTaslimBack(1).svg, left = drawTaslimBack(-1).svg;
+  assert.ok(cxOf(right) > cxOf(centre), "a right turn should move the head to the figure's right");
+  assert.ok(cxOf(left) < cxOf(centre), "a left turn should move the head to the figure's left");
+  assert.ok(rxOf(right) < rxOf(centre), "the head should narrow when turned");
+  assert.ok(Math.abs((cxOf(right) - cxOf(centre)) - (cxOf(centre) - cxOf(left))) < 0.01, "the turn should be symmetric");
+});
+
+test("taslim: the neck follows the head, so there is no step at the neck", () => {
+  const body = taslimBody();
+  // look only at the head group; the arms in the body also use fig-limb
+  const neckTopX = (svg) => Number(/<line class="fig-limb" x1="([-\d.]+)"/.exec(svg.slice(body.length))[1]);
+  const headCx = (svg) => Number(/<ellipse class="fig-head" cx="([-\d.]+)"/.exec(svg)[1]);
+  for (const turn of [-1, -0.5, 0, 0.5, 1]) {
+    const svg = drawTaslimBack(turn).svg;
+    const neck = neckTopX(svg), head = headCx(svg);
+    // the neck leans the same way as the head, never the other way
+    assert.ok(Math.sign(neck - TASLIM_BACK.cx) === Math.sign(turn) || turn === 0,
+      `at turn ${turn} the neck leans the wrong way`);
+    // and it stays under the head rather than beside it
+    assert.ok(Math.abs(neck - head) < TASLIM_BACK.head.r,
+      `at turn ${turn} the neck top is ${Math.abs(neck - head).toFixed(1)}px from the head centre`);
+  }
+});
+
+test("taslim: the back of the head is shaded on the side away from the turn", () => {
+  const centre = drawTaslimBack(0).svg;
+  assert.ok(!centre.includes("fig-head-shade"), "no shading while facing forward");
+  for (const turn of [1, -1]) {
+    const svg = drawTaslimBack(turn).svg;
+    const shade = /<ellipse class="fig-head-shade" cx="([-\d.]+)"/.exec(svg);
+    assert.ok(shade, `turn ${turn} should be shaded`);
+    const headCx = Number(/<ellipse class="fig-head" cx="([-\d.]+)"/.exec(svg)[1]);
+    // the shading sits opposite the direction of the turn (the back of the head)
+    assert.ok(Math.sign(Number(shade[1]) - headCx) === -Math.sign(turn),
+      `turn ${turn}: the shading is on the wrong side of the head`);
+    assert.ok(svg.includes("clip-path"), "the shading must be clipped to the head outline");
+  }
+  // no facial features or ears anywhere in the drawing
+  assert.ok(!/eye|ear|mouth|nose/i.test(drawTaslimBack(1).svg), "the head must stay featureless");
+});
+
+test("taslim: the turn is big enough to read without the arrow", () => {
+  assert.ok(TASLIM_BACK.headShift >= 20, `headShift ${TASLIM_BACK.headShift} is too small to notice`);
+  assert.ok(TASLIM_BACK.headNarrow >= 0.35, `headNarrow ${TASLIM_BACK.headNarrow} is too subtle`);
+  // the head still has to fit in the frame once shifted
+  const edge = TASLIM_BACK.cx + TASLIM_BACK.headShift + TASLIM_BACK.head.r;
+  assert.ok(edge <= FRAME.x + FRAME.w, "the shifted head is clipped by the frame");
+});
+
+test("taslim: nothing is drawn outside the fixed frame", () => {
+  const d = TASLIM_BACK;
+  const widest = d.cx + Math.max(d.seat.dx, d.hand.dx + d.w.arm / 2, d.arrow.dx + 60);
+  const narrowest = d.cx - Math.max(d.seat.dx, d.hand.dx + d.w.arm / 2, d.arrow.dx + 60);
+  assert.ok(narrowest >= FRAME.x, "the figure extends left of the frame");
+  assert.ok(widest <= FRAME.x + FRAME.w, "the figure (or its label) extends right of the frame");
+  assert.ok(d.arrow.y - 20 >= FRAME.y, "the turn arrow is clipped at the top");
+  assert.ok(d.mat.nearY <= FRAME.y + FRAME.h, "the mat is clipped at the bottom");
+  assert.ok(d.head.y - d.head.r >= FRAME.y, "the head is clipped at the top");
+});
+
+test("taslim: it reuses the seated body, so the transition in is a cross-fade", () => {
+  // taslim is an alias of sitting for path purposes: no walking between poses
+  assert.deepEqual(pathBetween("sitting", "taslim"), ["sitting"]);
+  assert.deepEqual(pathBetween("taslim", "sitting"), ["sitting"]);
+  // and coming from prostration still uses the staged route
+  assert.deepEqual(pathBetween("sujood", "taslim"), ["sujood", "palmsDown", "kneel", "sitting"]);
+  assert.equal(POSE_ALIAS.taslim, "sitting");
 });
 
 // ---------- the front view of sujood ----------

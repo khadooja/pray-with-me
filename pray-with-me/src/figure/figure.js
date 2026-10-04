@@ -5,7 +5,8 @@ import { t, has } from "../i18n/index.js";
 import { VIDEO_SPEEDS } from "../config.js";
 import { HEAD_R, VIEW, FRAME, jointsFor, lerpAngles } from "./kinematics.js";
 import { POSES, ALL_POSES, POSE_FOR_STEP, pathBetween, durationFor,
-  SUJOOD_FRONT, frontPoints, CROSSFADE_MS } from "./poses.js";
+  SUJOOD_FRONT, frontPoints, CROSSFADE_MS,
+  TASLIM_BACK, TASLIM_MS, taslimTurnAt } from "./poses.js";
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -234,6 +235,114 @@ function drawSujoodFront() {
   };
 }
 
+// ---------------------------------------------------------------------------
+// التسليم — منظر من الخلف، الرأس يلتفت يميناً ثم يساراً
+// ---------------------------------------------------------------------------
+// الجسم كله يُرسم بدون أي علاقة بقيمة turn: الكتفان والظهر والذراعان ثابتون تماماً،
+// والحركة في الرأس فقط. (الاختبار يتأكد إن شفرة الجسم ما تتغيّر مع الالتفات.)
+function taslimBody() {
+  const d = TASLIM_BACK;
+  const cx = d.cx;
+  const P = (x, y) => `${n2(x)} ${n2(y)}`;
+  const m = d.mat;
+
+  const mat = `
+    <g class="fig-mat">
+      <path class="fig-mat-fill" d="M ${cx - m.farHalf} ${m.farY} L ${cx + m.farHalf} ${m.farY}
+        L ${cx + m.nearHalf} ${m.nearY} L ${cx - m.nearHalf} ${m.nearY} Z" />
+      <path class="fig-mat-line" fill="none" d="M ${cx - m.farHalf} ${m.farY} L ${cx - m.nearHalf} ${m.nearY}" />
+      <path class="fig-mat-line" fill="none" d="M ${cx + m.farHalf} ${m.farY} L ${cx + m.nearHalf} ${m.nearY}" />
+    </g>`;
+
+  // القدمان تحت الجسم (تبينان من الخلف)
+  const feet =
+    cap({ x: cx - d.foot.dx, y: d.foot.y }, { x: cx - d.foot.dx + 10, y: d.foot.y }, d.w.foot, "fig-far") +
+    cap({ x: cx + d.foot.dx - 10, y: d.foot.y }, { x: cx + d.foot.dx, y: d.foot.y }, d.w.foot, "fig-far");
+
+  // الجذع: من الكتفين (أعرض) إلى الوركين ثم قاعدة الجلوس، بزوايا ناعمة
+  const body = `<path class="fig-body" d="M ${P(cx - d.shoulder.dx, d.shoulder.y)}
+    Q ${P(cx, d.shoulder.y - 20)} ${P(cx + d.shoulder.dx, d.shoulder.y)}
+    L ${P(cx + d.hip.dx, d.hip.y)}
+    Q ${P(cx + d.seat.dx, d.seat.y)} ${P(cx + d.seat.dx - 14, d.seat.y)}
+    L ${P(cx - d.seat.dx + 14, d.seat.y)}
+    Q ${P(cx - d.seat.dx, d.seat.y)} ${P(cx - d.hip.dx, d.hip.y)} Z" />`;
+
+  // الذراعان على الجنبين والكفان على الفخذين
+  const arms =
+    limb({ x: cx - d.shoulder.dx + 6, y: d.shoulder.y + 6 }, { x: cx - d.hand.dx, y: d.hand.y }, d.w.arm) +
+    limb({ x: cx + d.shoulder.dx - 6, y: d.shoulder.y + 6 }, { x: cx + d.hand.dx, y: d.hand.y }, d.w.arm);
+
+  // الرقبة ما هي هنا: صارت مع الرأس لأنها تتبع الالتفات (شوفوا taslimHead)
+  return `${mat}${feet}${body}${arms}`;
+}
+
+// الرقبة + الرأس: هذا الجزء وحده اللي يتحرك مع الالتفات (الجسم والكتفان ثابتان).
+// - الرأس يزيح نحو جهة الالتفات ويضيق (منظور).
+// - الرقبة تميل مع الرأس وطرفها العلوي **داخل** الرأس، عشان ما تبين "درجة" عند الرقبة.
+// - ظل خفيف على الجهة البعيدة من الرأس (قفا الرأس) عشان الدوران يبيّن كأنه ثلاثي الأبعاد.
+//   بدون أي ملامح وجه ولا أذنين.
+function taslimHead(turn) {
+  const d = TASLIM_BACK;
+  const cx = d.cx + turn * d.headShift;
+  const rx = d.head.r * (1 - d.headNarrow * Math.abs(turn));
+  const ry = d.head.r;
+
+  // الرقبة تتبع الرأس: أعلاها يميل معه، وأسفلها ثابت عند الكتفين
+  const neckTop = { x: d.cx + turn * d.headShift * 0.75, y: d.head.y + 8 };
+  const neck = cap(neckTop, { x: d.cx, y: d.neck.y + 6 }, d.w.neck, "fig-limb");
+
+  const head = `<ellipse class="fig-head" cx="${n2(cx)}" cy="${d.head.y}" rx="${n2(rx)}" ry="${ry}" />`;
+
+  // الظل: قطعة هلالية على الجهة المعاكسة لاتجاه الالتفات، مقصوصة بحدود الرأس
+  const shade =
+    Math.abs(turn) < 0.08
+      ? ""
+      : `<clipPath id="taslim-head-clip"><ellipse cx="${n2(cx)}" cy="${d.head.y}" rx="${n2(rx)}" ry="${ry}" /></clipPath>` +
+        `<g clip-path="url(#taslim-head-clip)"><ellipse class="fig-head-shade" cx="${n2(cx - turn * rx * 0.72)}" cy="${d.head.y}" rx="${n2(rx)}" ry="${ry}" opacity="${n2(Math.min(1, Math.abs(turn) * 1.3))}" /></g>`;
+
+  return neck + head + shade;
+}
+
+// سهم منحني فوق الرأس يوضّح جهة الالتفات + كلمة من en.json
+function taslimArrow(turn, label) {
+  const d = TASLIM_BACK;
+  if (!label || Math.abs(turn) < 0.02) return "";
+  const dir = Math.sign(turn);
+  const a = { x: d.cx - dir * 6, y: d.arrow.y };
+  const b = { x: d.cx + dir * d.arrow.dx, y: d.arrow.y + 8 };
+  const head = `${b.x - dir * 9} ${b.y - 7} L ${b.x} ${b.y} L ${b.x - dir * 9} ${b.y + 6}`;
+  return `
+    <g class="fig-turn" opacity="${n2(Math.min(1, Math.abs(turn) * 1.6))}">
+      <path class="fig-turn-arrow" fill="none" d="M ${n2(a.x)} ${n2(a.y)} Q ${n2((a.x + b.x) / 2)} ${n2(a.y - 16)} ${n2(b.x)} ${n2(b.y)}" />
+      <path class="fig-turn-arrow" fill="none" d="M ${n2(head)}" />
+      <text class="fig-turn-label" x="${n2(d.cx + dir * (d.arrow.dx + 16))}" y="${d.arrow.y + 4}"
+        text-anchor="${dir > 0 ? "start" : "end"}">${esc(t(label))}</text>
+    </g>`;
+}
+
+// رسمة التسليم كاملة عند لحظة معيّنة من الحركة
+function drawTaslimBack(turn = 0, label = null) {
+  return {
+    viewBox: `${FRAME.x} ${FRAME.y} ${FRAME.w} ${FRAME.h}`,
+    svg: `${taslimBody()}${taslimHead(turn)}${taslimArrow(turn, label)}`,
+  };
+}
+
+// بديل بدون حركة (prefers-reduced-motion): لوحتان جنب بعض، يمين ويسار، مع الكلمات.
+function drawTaslimPanels() {
+  const half = FRAME.w / 2;
+  const panel = (turn, label, shiftX) => `
+    <g transform="translate(${n2(shiftX)} ${n2(FRAME.y + FRAME.h * 0.12)}) scale(0.5)">
+      <g transform="translate(${n2(-FRAME.x - FRAME.w / 2)} ${n2(-FRAME.y)})">
+        ${taslimBody()}${taslimHead(turn)}${taslimArrow(turn, label)}
+      </g>
+    </g>`;
+  return {
+    viewBox: `${FRAME.x} ${FRAME.y} ${FRAME.w} ${FRAME.h}`,
+    svg: panel(1, "taslim_right", FRAME.x + half * 0.5) + panel(-1, "taslim_left", FRAME.x + half * 1.5),
+  };
+}
+
 function poseNameFor(step) {
   const name = POSE_FOR_STEP[step.id];
   return name && POSES[name] ? name : null;
@@ -270,6 +379,7 @@ export function figureCard(step) {
       <svg class="fig-svg" viewBox="${FRAME.x} ${FRAME.y} ${FRAME.w} ${FRAME.h}" role="img" aria-label="${esc(alt)}" preserveAspectRatio="xMidYMid meet">
         <g class="fig-layer fig-side"></g>
         <g class="fig-layer fig-front"></g>
+        <g class="fig-layer fig-back"></g>
       </svg>
       ${pose.caption && has(pose.caption) ? `<p class="figure-caption">${esc(t(pose.caption))}</p>` : ""}
       <div class="video-controls">
@@ -323,9 +433,13 @@ export function setupFigure(root) {
 
   const sideLayer = svg.querySelector(".fig-side");
   const frontLayer = svg.querySelector(".fig-front");
-  // السجود وحده له منظر أمامي؛ بقية الوضعيات جانبية فقط.
+  const backLayer = svg.querySelector(".fig-back");
+  // السجود له منظر أمامي، والتسليم له منظر من الخلف، والباقي جانبي.
   const endsInFront = toName === "sujood";
   const startsInFront = fromName === "sujood" && toName !== "sujood";
+  const endsInBack = toName === "taslim";
+  // جسم التسليم هو نفسه جلسة التشهد، فنرسم الهيكل الجانبي على أنه "sitting"
+  const skeletonName = toName === "taslim" ? "sitting" : toName;
 
   let speedIdx = 0;
   let raf = 0;
@@ -349,7 +463,7 @@ export function setupFigure(root) {
   }
 
   function render(angles, armScale) {
-    sideLayer.innerHTML = drawPose(toName === "sujood" ? "sujood" : toName, angles, armScale).svg;
+    sideLayer.innerHTML = drawPose(skeletonName, angles, armScale).svg;
   }
   function renderFront() {
     if (!frontLayer.innerHTML) frontLayer.innerHTML = drawSujoodFront().svg;
@@ -358,6 +472,7 @@ export function setupFigure(root) {
   function showLayer(which) {
     sideLayer.style.opacity = which === "side" ? "1" : "0";
     frontLayer.style.opacity = which === "front" ? "1" : "0";
+    backLayer.style.opacity = which === "back" ? "1" : "0";
     // عنوان المخطط يبيّن مع المنظر الأمامي فقط
     card.classList.toggle("front-shown", which === "front");
   }
@@ -366,7 +481,30 @@ export function setupFigure(root) {
   }
 
   // الوضع النهائي للخطوة
+  // حلقة التفات الرأس في التسليم: الجسم ثابت والرأس فقط يتحرك.
+  function runTaslim() {
+    const p = POSES.sitting;
+    render(p.angles, p.armScale ?? 1); // الجسم الجانبي يبقى تحت، للتلاشي
+    backLayer.innerHTML = drawTaslimBack(0, null).svg;
+    showLayer("back");
+
+    if (reducedMotion()) {
+      backLayer.innerHTML = drawTaslimPanels().svg; // لوحتان ساكنتان بدل الحركة
+      return;
+    }
+    const t0 = performance.now();
+    const step = (now) => {
+      if (disposed) return;
+      const elapsed = Math.max(0, (now - t0) * VIDEO_SPEEDS[speedIdx]);
+      const { turn, label } = taslimTurnAt(elapsed);
+      backLayer.innerHTML = drawTaslimBack(turn, label).svg;
+      if (elapsed < TASLIM_MS) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  }
+
   function finish() {
+    if (endsInBack) return runTaslim();
     if (endsInFront) {
       renderFront();
       const p = POSES.sujood;
@@ -434,7 +572,9 @@ export function setupFigure(root) {
   };
 
   animate();
-  lastPoseName = toName;
+  // جسم التسليم هو نفسه جلسة التشهد، فنسجّل "sitting" عشان الرجوع للتشهد
+  // ما يصير فيه حركة وهمية بين وضعيتين متطابقتين.
+  lastPoseName = toName === "taslim" ? "sitting" : toName;
 
   return {
     dispose() {
@@ -444,4 +584,4 @@ export function setupFigure(root) {
   };
 }
 
-export { drawPose, drawSujoodFront, poseNameFor };
+export { drawPose, drawSujoodFront, drawTaslimBack, drawTaslimPanels, taslimBody, poseNameFor };

@@ -20,17 +20,6 @@ function save(data) {
   }
 }
 
-// نفس الخطوة ممكن تتكرر في الرحلة (السجود مرتين، وتكبيرة الانتقال مرتين)، وتعريفها واحد.
-// عشان نقدر نفرّق في التقييم بين السجدة الأولى والثانية، نسجّل المحاولات بالموضع:
-// sujood#1 و sujood#2. ترجع مفتاحاً لكل خطوة في الرحلة بنفس ترتيبها.
-export function journeyAttemptKeys(journeySteps) {
-  const seen = {};
-  return journeySteps.map((s) => {
-    seen[s.id] = (seen[s.id] ?? 0) + 1;
-    return `${s.id}#${seen[s.id]}`;
-  });
-}
-
 // Appends { ok, at } to the step's attempt list.
 export function recordAttempt(stepId, ok) {
   const data = load();

@@ -74,7 +74,7 @@ function parseCards(html, parent) {
     const svg = makeEl("svg");
     svg.className = "fig-svg";
     svg.parent = sec;
-    for (const cls of ["fig-side", "fig-front"]) {
+    for (const cls of ["fig-side", "fig-front", "fig-back"]) {
       const g = makeEl("g");
       g.className = `fig-layer ${cls}`;
       g.parent = svg;
@@ -367,12 +367,14 @@ test("stepping back and forth across every boundary of the journey is clean", ()
   assert.equal(pending(), 0, "no callbacks should outlive the last step");
 });
 
-test("the two sujood occurrences are the same definition and both behave", () => {
+test("all four sujood occurrences are the same definition and each behaves", () => {
   reset();
   rafTimeOffset = 8;
   const positions = fajr.order.map((id, i) => (id === "sujood" ? i : -1)).filter((i) => i >= 0);
-  assert.equal(positions.length, 2, "sujood should appear twice in the journey");
-  assert.equal(JOURNEY[positions[0]], JOURNEY[positions[1]], "both occurrences must be one object");
+  assert.equal(positions.length, 4, "sujood happens four times across the two rakahs");
+  for (const i of positions) {
+    assert.equal(JOURNEY[i], JOURNEY[positions[0]], "every occurrence must be the one object");
+  }
   const nav = makeApp();
   for (const i of positions) {
     nav.go(JOURNEY[i]);
@@ -381,6 +383,20 @@ test("the two sujood occurrences are the same definition and both behave", () =>
   }
   nav.dispose();
   assert.deepEqual(errors.map(String), []);
+  assert.equal(pending(), 0);
+});
+
+test("both rakahs run end to end, forward then backward, with nothing left pending", () => {
+  reset();
+  rafTimeOffset = 8;
+  const nav = makeApp();
+  for (const step of [...JOURNEY, ...[...JOURNEY].reverse()]) {
+    nav.go(step);
+    for (let i = 0; i < 12; i++) tick(40);
+  }
+  nav.dispose();
+  assert.deepEqual(errors.map(String), [], "walking both rakahs threw");
+  assert.equal(pending(), 0, "callbacks left pending after 48 navigations");
 });
 
 test("sujood -> sitting -> sujood and back throws no errors", () => {
@@ -421,6 +437,36 @@ test("interrupting the sujood -> sitting transition is clean", () => {
   assert.equal(cards(nav.app).length, 1);
   nav.dispose();
   assert.equal(pending(), 0);
+});
+
+test("tashahhud -> taslim -> back throws no errors", () => {
+  reset();
+  rafTimeOffset = 8;
+  const nav = makeApp();
+  for (const step of [byId.tashahhud, byId.taslim, byId.tashahhud, byId.taslim]) {
+    nav.go(step);
+    for (let i = 0; i < 90; i++) tick(16); // long enough for the whole 5s head turn
+    assert.equal(cards(nav.app).length, 1, `${step.id} should show a figure`);
+  }
+  nav.dispose();
+  assert.deepEqual(errors.map(String), [], "taslim navigation threw");
+  assert.equal(pending(), 0, "the head-turn loop must stop when the step is left");
+});
+
+test("leaving taslim mid-turn cancels the head-turn loop", () => {
+  reset();
+  rafTimeOffset = 8;
+  const nav = makeApp();
+  nav.go(byId.tashahhud);
+  for (let i = 0; i < 20; i++) tick(16);
+  nav.go(byId.taslim);
+  for (let i = 0; i < 20; i++) tick(16); // partway through the turn
+  nav.go(byId.sujood);                   // leave early
+  for (let i = 0; i < 60; i++) tick(16);
+  assert.deepEqual(errors.map(String), [], "interrupting the taslim turn threw");
+  assert.equal(cards(nav.app).length, 1);
+  nav.dispose();
+  assert.equal(pending(), 0, "no head-turn frames should outlive the step");
 });
 
 console.log(`\n${passed} passed${process.exitCode ? ", some FAILED" : ""}`);

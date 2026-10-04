@@ -1,5 +1,5 @@
 {
-  "_note": "Structure for the full Fajr prayer. The content teammate completes every TODO (instructions, dhikr, sources, audio) and has everything Sharia-reviewed before release. Do not invent hadith numbers or sources. A step that happens twice (takbir_transition, sujood) is defined ONCE here and listed twice in \"order\", so it is written and reviewed once.",
+  "_note": "Structure for the full Fajr prayer (two rakahs). The content teammate completes every TODO (instructions, dhikr, sources, audio) and has everything Sharia-reviewed before release. Do not invent hadith numbers or sources. Every step is defined ONCE here; \"order\" lists it as many times as the prayer performs it, so the second rakah reuses the same reviewed text.",
   "prayer": "fajr",
   "order": [
     "takbir",
@@ -14,6 +14,16 @@
     "jalsa",
     "sujood",
     "second_rakah",
+    "standing",
+    "fatiha",
+    "takbir_transition",
+    "ruku",
+    "rising",
+    "itidal",
+    "takbir_transition",
+    "sujood",
+    "jalsa",
+    "sujood",
     "tashahhud",
     "taslim"
   ],
@@ -165,7 +175,7 @@
         "en": "The Second Rakah"
       },
       "instruction": {
-        "en": "Stand and repeat the same steps for the second rakah."
+        "en": "Rise to stand for the second rakah."
       },
       "source": "TODO"
     },

@@ -4,7 +4,8 @@
 import fajr from "./content/fajr.json";
 import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS } from "./config.js";
 import { t, has } from "./i18n/index.js";
-import { recordAttempt, journeyAttemptKeys } from "./progress/store.js";
+import { recordAttempt } from "./progress/store.js";
+import { resolveJourney, journeyAttemptKeys, journeyRakahs, rakahCount } from "./content/journey.js";
 import { evaluatePose, resetPoseMock } from "./pose/index.js";
 import { startCamera, stopCamera, runPoseLoop, shouldMirror } from "./pose/detector.js";
 import { preloadASR, startRecording, transcribe, compareRecitation } from "./speech/index.js";
@@ -15,17 +16,14 @@ import { figureCard, diagramCard, setupFigure } from "./figure/figure.js";
 import { showSuccessSheet, showConfirmSheet, dismissSheet } from "./ui/sheet.js";
 
 // The journey is fajr.json's "order" resolved into step definitions.
-// A step that happens twice (takbir_transition, sujood) is defined once and listed
-// twice in "order", so the same object appears twice here — written and reviewed once.
-// If "order" is missing (an older content branch), fall back to the definition order.
-const byId = Object.fromEntries(fajr.steps.map((s) => [s.id, s]));
-const steps = (fajr.order ?? fajr.steps.map((s) => s.id))
-  .map((id) => {
-    const step = byId[id];
-    if (!step) console.warn(`[content] fajr.json "order" names a step that does not exist: "${id}"`);
-    return step;
-  })
-  .filter(Boolean);
+// A step that happens more than once (sujood four times, ruku twice, the whole second
+// rakah) is defined once and listed again in "order", so the same object appears here
+// several times — written and Sharia-reviewed once.
+const steps = resolveJourney(fajr);
+
+// رقم الركعة لكل خطوة، وعددها الكلي (نعرضها في الشريط العلوي)
+const RAKAHS = journeyRakahs(steps);
+const RAKAH_COUNT = rakahCount(steps);
 
 // مفتاح تسجيل المحاولات لكل موضع في الرحلة: sujood#1 و sujood#2 ...
 const ATTEMPT_KEYS = journeyAttemptKeys(steps);
@@ -86,6 +84,7 @@ function header({ progress = true, close = true } = {}) {
                aria-label="${esc(t("step_of", { x, n }))}"><div class="progress-fill" style="width:${(x / n) * 100}%"></div></div>`
           : ""
       }
+      ${progress && RAKAH_COUNT > 1 ? `<span class="rakah">${esc(t("rakah_of", { x: RAKAHS[current] ?? 1, n: RAKAH_COUNT }))}</span>` : ""}
       ${USE_MOCK ? `<span class="badge">${esc(t("mock_mode"))}</span>` : ""}
     </header>`;
 }

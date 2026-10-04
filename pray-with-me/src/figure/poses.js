@@ -123,6 +123,22 @@ export const POSES = {
     highlights: [{ type: "dot", at: "toeNear" }],
     caption: "figure_sitting_foot",
   },
+
+  // التسليم: نفس جلسة التشهد تماماً (نفس الزوايا)، لكن يُرسم **من الخلف** مع التفات الرأس.
+  // الرسمة نفسها في TASLIM_BACK وليست من سلسلة المفاصل، لكن نحتفظ بالزوايا هنا
+  // عشان الانتقال إليه يمر بنفس المراحل ويبقى الجسم متصلاً بصرياً قبل التلاشي.
+  taslim: {
+    angles: {
+      torso: 90, neck: 90,
+      upperArmNear: -72.6, forearmNear: -32.7, handNear: 0,
+      upperArmFar: -81.1, forearmFar: -27.6, handFar: 0,
+      thighNear: -15.8, shinNear: 156.3, footNear: -76.2,
+      thighFar: -16.2, shinFar: 172.3, footFar: -164.2,
+    },
+    armScale: 1,
+    view: "back",
+    highlights: [],
+  },
 };
 
 // ---------- وضعيات وسطية للحركة فقط (ما تظهر كخطوة) ----------
@@ -171,7 +187,13 @@ function ladderWalk(a, b) {
 
 // مسار الحركة بين وضعيتين: قائمة أسماء وضعيات نمر عليها بالترتيب،
 // عشان ما يطفو الجسم فوق السجادة في الانتقالات الطويلة.
-export function pathBetween(from, to) {
+// وضعيات لها رسمة خاصة لكن جسمها نفس وضعية ثانية.
+// التسليم: الجسم جالس مثل التشهد بالضبط، واللي يتغيّر هو زاوية النظر (من الخلف) والتفات الرأس.
+export const POSE_ALIAS = { taslim: "sitting" };
+
+export function pathBetween(rawFrom, rawTo) {
+  const from = POSE_ALIAS[rawFrom] ?? rawFrom;
+  const to = POSE_ALIAS[rawTo] ?? rawTo;
   if (from === to) return [to];
   const fromOnLadder = rungOf(from) >= 0;
   const toOnLadder = rungOf(to) >= 0;
@@ -280,6 +302,66 @@ export function isOnFrontMat(p, def = SUJOOD_FRONT) {
 // مدة التلاشي بين المنظر الجانبي والأمامي (مللي ثانية)
 export const CROSSFADE_MS = 500;
 
+// ============================================================================
+// التسليم — منظر من الخلف
+// ============================================================================
+// ⚠️ في انتظار مراجعة المختصة الشرعية، مثل بقية الوضعيات.
+// وبالذات: **مقدار التفات الرأس** (كم درجة يلتفت، وهل يُرى الخد أو لا) غير مراجع بعد.
+//
+// ليش من الخلف؟ لأن التسليم هو الحركة الوحيدة اللي فيها **اتجاه**: يمين ثم يسار.
+// لو رسمناه من الأمام ينقلب الاتجاه في عين المستخدم. من الخلف، يمين الشكل = يمين المستخدم،
+// فيقلّده مباشرة مثل ما يتابع الإمام.
+//
+// الجسم جالس نفس جلسة التشهد (افتراش)، والكتفان **ما يتحركان** أبداً:
+// الحركة كلها في الرأس فقط.
+export const TASLIM_BACK = {
+  cx: 167.5, // محور التماثل
+  head: { y: 74, r: 23 },
+  // أقصى إزاحة للرأس عند الالتفات الكامل، ومقدار "ضيق" الرأس (منظور).
+  // ضاعفناها عشان الالتفات يبيّن بوضوح على شاشة الجوال حتى بدون السهم.
+  // ⚠️ المقدار الحقيقي للالتفات في انتظار مراجعة المختصة الشرعية.
+  headShift: 24,
+  headNarrow: 0.35,
+  neck: { y: 104, w: 14 },
+  shoulder: { dx: 44, y: 120 },
+  hip: { dx: 36, y: 176 },
+  hand: { dx: 50, y: 170 }, // الكفان على الفخذين
+  seat: { dx: 54, y: 196 }, // أسفل الجسم عند السجادة
+  foot: { dx: 26, y: 203 },
+  w: { arm: 17, neck: 20, foot: 16 },
+  arrow: { y: 36, dx: 34, r: 30 }, // السهم المنحني فوق الرأس
+  mat: { nearY: 212, farY: 150, nearHalf: 150, farHalf: 96 },
+};
+
+// شريط زمني لالتفات الرأس. turn: ‏+1 = يمين، ‏-1 = يسار، 0 = للأمام.
+// ⚠️ مدة الوقفة ومقدار الالتفات في انتظار المراجعة الشرعية.
+export const TASLIM_TIMELINE = [
+  { ms: 500, from: 0, to: 1, label: "taslim_right" }, // يلتفت يميناً
+  { ms: 1500, from: 1, to: 1, label: "taslim_right" }, // وقفة على اليمين
+  { ms: 500, from: 1, to: 0, label: "taslim_right" }, // يرجع للوسط
+  { ms: 500, from: 0, to: -1, label: "taslim_left" }, // يلتفت يساراً
+  { ms: 1500, from: -1, to: -1, label: "taslim_left" }, // وقفة على اليسار
+  { ms: 500, from: -1, to: 0, label: "taslim_left" }, // يرجع للوسط
+];
+
+export const TASLIM_MS = TASLIM_TIMELINE.reduce((s, p) => s + p.ms, 0);
+
+// حالة الالتفات عند لحظة معيّنة. دالة صافية (بدون DOM) عشان نقدر نختبرها.
+export function taslimTurnAt(ms) {
+  let t = Math.max(0, Math.min(ms, TASLIM_MS));
+  for (const phase of TASLIM_TIMELINE) {
+    if (t <= phase.ms) {
+      const k = phase.ms === 0 ? 1 : t / phase.ms;
+      // تنعيم بسيط عشان الحركة ما تكون حادة
+      const e = k < 0.5 ? 2 * k * k : 1 - 2 * (1 - k) * (1 - k);
+      const turn = phase.from + (phase.to - phase.from) * e;
+      return { turn, label: Math.abs(turn) > 0.02 ? phase.label : null };
+    }
+    t -= phase.ms;
+  }
+  return { turn: 0, label: null };
+}
+
 // أي خطوة في fajr.json تستخدم أي وضعية. الفاتحة تُقرأ قائماً.
 // أي خطوة في رحلة الصلاة تعرض أي وضعية.
 // الخطوات اللي ما لها اسم هنا ما تعرض شكل أبداً (الجلسة والتشهد والتسليم):
@@ -296,5 +378,5 @@ export const POSE_FOR_STEP = {
   jalsa: "sitting", // الجلسة بين السجدتين
   second_rakah: "standing", // يقوم من السجود: نفس مسار النزول بالعكس
   tashahhud: "sitting",
-  // التسليم بدون شكل: وضعيته (الالتفات يميناً ويساراً) ما تبيّن في المنظر الجانبي
+  taslim: "taslim", // منظر من الخلف: يمين المستخدم = يمين الشكل
 };
