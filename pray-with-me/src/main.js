@@ -14,7 +14,18 @@ import { videoCard, setupVideo } from "./ui/video.js";
 import { figureCard, diagramCard, setupFigure } from "./figure/figure.js";
 import { showSuccessSheet, showConfirmSheet, dismissSheet } from "./ui/sheet.js";
 
-const steps = fajr.steps;
+// The journey is fajr.json's "order" resolved into step definitions.
+// A step that happens twice (takbir_transition, sujood) is defined once and listed
+// twice in "order", so the same object appears twice here — written and reviewed once.
+// If "order" is missing (an older content branch), fall back to the definition order.
+const byId = Object.fromEntries(fajr.steps.map((s) => [s.id, s]));
+const steps = (fajr.order ?? fajr.steps.map((s) => s.id))
+  .map((id) => {
+    const step = byId[id];
+    if (!step) console.warn(`[content] fajr.json "order" names a step that does not exist: "${id}"`);
+    return step;
+  })
+  .filter(Boolean);
 const app = document.getElementById("app");
 let current = 0;
 let cleanup = null;

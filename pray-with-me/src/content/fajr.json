@@ -1,18 +1,39 @@
 {
-  "_note": "Draft content for one rakah of Fajr. The content teammate completes the TODO fields (sources, transliteration, meaning, audio) and has everything Sharia-reviewed before release. Do not invent hadith numbers or sources.",
+  "_note": "Structure for the full Fajr prayer. The content teammate completes every TODO (instructions, dhikr, sources, audio) and has everything Sharia-reviewed before release. Do not invent hadith numbers or sources. A step that happens twice (takbir_transition, sujood) is defined ONCE here and listed twice in \"order\", so it is written and reviewed once.",
   "prayer": "fajr",
+  "order": [
+    "takbir",
+    "standing",
+    "fatiha",
+    "takbir_transition",
+    "ruku",
+    "rising",
+    "itidal",
+    "takbir_transition",
+    "sujood",
+    "jalsa",
+    "sujood",
+    "second_rakah",
+    "tashahhud",
+    "taslim"
+  ],
   "steps": [
     {
       "id": "takbir",
       "type": "guided",
-      "title": { "ar": "تكبيرة الإحرام", "en": "Opening Takbir" },
+      "title": {
+        "ar": "تكبيرة الإحرام",
+        "en": "Opening Takbir"
+      },
       "instruction": {
         "en": "Stand facing the qibla. Raise both hands to the level of your ears or shoulders and say:"
       },
       "dhikr": {
         "arabic": "الله أكبر",
         "transliteration": "Allāhu Akbar",
-        "meaning": { "en": "Allah is the Greatest" },
+        "meaning": {
+          "en": "Allah is the Greatest"
+        },
         "audio": ""
       },
       "source": "TODO"
@@ -21,7 +42,10 @@
       "id": "standing",
       "type": "pose",
       "check": "standing",
-      "title": { "ar": "القيام", "en": "Standing (Qiyam)" },
+      "title": {
+        "ar": "القيام",
+        "en": "Standing (Qiyam)"
+      },
       "instruction": {
         "en": "Stand upright, facing forward. Place your right hand over your left hand on your chest."
       },
@@ -30,7 +54,10 @@
     {
       "id": "fatiha",
       "type": "speech",
-      "title": { "ar": "قراءة الفاتحة", "en": "Reciting Al-Fatihah" },
+      "title": {
+        "ar": "قراءة الفاتحة",
+        "en": "Reciting Al-Fatihah"
+      },
       "instruction": {
         "en": "While standing, recite Surat Al-Fatihah from beginning to end."
       },
@@ -41,18 +68,59 @@
       "source": "TODO"
     },
     {
+      "id": "takbir_transition",
+      "type": "guided",
+      "title": {
+        "ar": "تكبيرة الانتقال",
+        "en": "Transition Takbir"
+      },
+      "instruction": {
+        "en": "TODO"
+      },
+      "source": "TODO"
+    },
+    {
       "id": "ruku",
       "type": "pose",
       "check": "ruku",
-      "title": { "ar": "الركوع", "en": "Bowing (Ruku)" },
+      "title": {
+        "ar": "الركوع",
+        "en": "Bowing (Ruku)"
+      },
       "instruction": {
         "en": "Bow down with your back straight and level with the floor, and your hands on your knees. Then say:"
       },
       "dhikr": {
         "arabic": "سبحان ربي العظيم",
         "transliteration": "Subḥāna rabbiyal-ʿaẓīm",
-        "meaning": { "en": "Glory be to my Lord, the Most Great" },
+        "meaning": {
+          "en": "Glory be to my Lord, the Most Great"
+        },
         "audio": ""
+      },
+      "source": "TODO"
+    },
+    {
+      "id": "rising",
+      "type": "guided",
+      "title": {
+        "ar": "الرفع من الركوع",
+        "en": "Rising from Ruku"
+      },
+      "instruction": {
+        "en": "TODO"
+      },
+      "source": "TODO"
+    },
+    {
+      "id": "itidal",
+      "type": "guided",
+      "title": {
+        "ar": "الاعتدال",
+        "en": "Standing Upright (I'tidal)"
+      },
+      "instruction": {
+        "en": "TODO"
       },
       "source": "TODO"
     },
@@ -60,15 +128,68 @@
       "id": "sujood",
       "type": "pose",
       "check": "sujood",
-      "title": { "ar": "السجود", "en": "Prostration (Sujood)" },
+      "title": {
+        "ar": "السجود",
+        "en": "Prostration (Sujood)"
+      },
       "instruction": {
         "en": "Prostrate with your forehead, nose, palms, knees and toes on the ground. Then say:"
       },
       "dhikr": {
         "arabic": "سبحان ربي الأعلى",
         "transliteration": "Subḥāna rabbiyal-aʿlā",
-        "meaning": { "en": "Glory be to my Lord, the Most High" },
+        "meaning": {
+          "en": "Glory be to my Lord, the Most High"
+        },
         "audio": ""
+      },
+      "source": "TODO"
+    },
+    {
+      "id": "jalsa",
+      "type": "guided",
+      "title": {
+        "ar": "الجلسة بين السجدتين",
+        "en": "Sitting Between the Two Prostrations"
+      },
+      "instruction": {
+        "en": "TODO"
+      },
+      "source": "TODO"
+    },
+    {
+      "id": "second_rakah",
+      "type": "guided",
+      "title": {
+        "ar": "الركعة الثانية",
+        "en": "The Second Rakah"
+      },
+      "instruction": {
+        "en": "Stand and repeat the same steps for the second rakah."
+      },
+      "source": "TODO"
+    },
+    {
+      "id": "tashahhud",
+      "type": "guided",
+      "title": {
+        "ar": "التشهد",
+        "en": "Tashahhud"
+      },
+      "instruction": {
+        "en": "TODO"
+      },
+      "source": "TODO"
+    },
+    {
+      "id": "taslim",
+      "type": "guided",
+      "title": {
+        "ar": "التسليم",
+        "en": "Taslim"
+      },
+      "instruction": {
+        "en": "TODO"
       },
       "source": "TODO"
     }

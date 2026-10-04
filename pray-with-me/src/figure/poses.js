@@ -238,10 +238,17 @@ export function isOnFrontMat(p, def = SUJOOD_FRONT) {
 export const CROSSFADE_MS = 500;
 
 // أي خطوة في fajr.json تستخدم أي وضعية. الفاتحة تُقرأ قائماً.
+// أي خطوة في رحلة الصلاة تعرض أي وضعية.
+// الخطوات اللي ما لها اسم هنا ما تعرض شكل أبداً (الجلسة والتشهد والتسليم):
+// وضعياتها لسه ما تمت مراجعتها، وما نبي نرسم وضعية غير مراجعة.
 export const POSE_FOR_STEP = {
   takbir: "takbir",
   standing: "standing",
-  fatiha: "standing",
+  fatiha: "standing", // الفاتحة تُقرأ قائماً
+  takbir_transition: "standing", // تكبيرة الانتقال تُقال والمصلي قائم في الموضعين
   ruku: "ruku",
+  rising: "standing", // الرفع من الركوع: يتحرك لأعلى من الركوع
+  itidal: "standing",
   sujood: "sujood",
+  second_rakah: "standing", // يقوم من السجود: نفس مسار النزول بالعكس
 };

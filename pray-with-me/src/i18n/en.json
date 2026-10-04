@@ -29,7 +29,7 @@
   "explain_ruku": "Your back was level with the floor and your knees straight.",
   "explain_sujood": "Your head was lower than your hips, so you were down in sujood.",
   "explain_fatiha": "You recited all of Al-Fatihah, in the right order.",
-  "footer": "This app checks posture and completeness of recitation only. It does not assess tajweed or rule on the validity of prayer. Your camera and microphone data never leave your device.",
+  "footer": "This app walks you through the whole prayer, but it only checks your posture in standing, ruku and sujood, and whether Al-Fatihah was recited completely. It does not assess tajweed or rule on the validity of prayer. Your camera and microphone data never leave your device.",
   "setup_title": "Set up your camera",
   "setup_side": "Place your phone or laptop on the floor, about 2 meters to your SIDE, not in front of you. You keep facing forward as usual.",
   "setup_steady": "Lean it against a wall or a book so it stays steady.",

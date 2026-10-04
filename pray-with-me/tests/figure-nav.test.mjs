@@ -313,4 +313,74 @@ test("an unknown pose name falls back instead of throwing, and warns once", () =
   ctl.dispose();
 });
 
+// ---------------------------------------------------------------- the real journey
+const fajr = JSON.parse(
+  (await import("node:fs")).readFileSync(new URL("../src/content/fajr.json", import.meta.url), "utf8")
+);
+const byId = Object.fromEntries(fajr.steps.map((s) => [s.id, s]));
+const JOURNEY = fajr.order.map((id) => byId[id]);
+
+test("the whole 14-step journey runs forward with no errors", () => {
+  reset();
+  rafTimeOffset = 8;
+  const nav = makeApp();
+  for (const step of JOURNEY) {
+    nav.go(step);
+    for (let i = 0; i < 20; i++) tick(30);
+    const expected = POSE_FOR_STEP[step.id] ? 1 : 0;
+    assert.equal(cards(nav.app).length, expected, `${step.id}: expected ${expected} figure card`);
+  }
+  nav.dispose();
+  assert.deepEqual(errors.map(String), [], "forward through the journey threw");
+  assert.equal(pending(), 0, "callbacks left pending at the end of the journey");
+});
+
+test("the whole 14-step journey runs backward with no errors", () => {
+  reset();
+  rafTimeOffset = 8;
+  const nav = makeApp();
+  for (const step of [...JOURNEY].reverse()) {
+    nav.go(step);
+    for (let i = 0; i < 20; i++) tick(30);
+    const expected = POSE_FOR_STEP[step.id] ? 1 : 0;
+    assert.equal(cards(nav.app).length, expected, `${step.id}: expected ${expected} figure card`);
+  }
+  nav.dispose();
+  assert.deepEqual(errors.map(String), [], "walking back through the journey threw");
+  assert.equal(pending(), 0);
+});
+
+test("stepping back and forth across every boundary of the journey is clean", () => {
+  reset();
+  rafTimeOffset = 8;
+  const nav = makeApp();
+  for (let i = 0; i < JOURNEY.length - 1; i++) {
+    nav.go(JOURNEY[i]);
+    tick(30);
+    nav.go(JOURNEY[i + 1]); // Next
+    tick(30);
+    nav.go(JOURNEY[i]);     // Back, mid-animation
+    for (let k = 0; k < 6; k++) tick(30);
+    assert.deepEqual(errors.map(String), [], `boundary ${JOURNEY[i].id} -> ${JOURNEY[i + 1].id} threw`);
+  }
+  nav.dispose();
+  assert.equal(pending(), 0, "no callbacks should outlive the last step");
+});
+
+test("the two sujood occurrences are the same definition and both behave", () => {
+  reset();
+  rafTimeOffset = 8;
+  const positions = fajr.order.map((id, i) => (id === "sujood" ? i : -1)).filter((i) => i >= 0);
+  assert.equal(positions.length, 2, "sujood should appear twice in the journey");
+  assert.equal(JOURNEY[positions[0]], JOURNEY[positions[1]], "both occurrences must be one object");
+  const nav = makeApp();
+  for (const i of positions) {
+    nav.go(JOURNEY[i]);
+    for (let k = 0; k < 70; k++) tick(16);
+    assert.equal(cards(nav.app).length, 1, `sujood at position ${i} should show a figure`);
+  }
+  nav.dispose();
+  assert.deepEqual(errors.map(String), []);
+});
+
 console.log(`\n${passed} passed${process.exitCode ? ", some FAILED" : ""}`);

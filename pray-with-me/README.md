@@ -19,15 +19,20 @@ is stored only in your browser's `localStorage`.
 ## What it does, and what it does NOT do
 
 It **does**:
-- Guide you through one rakah of Fajr: Takbir → Standing → Al-Fatihah → Ruku → Sujood.
-- Check parts of your **posture** with a camera placed to your side. Exactly what is checked:
+- Guide you through the **whole Fajr prayer**, step by step: opening Takbir → Standing →
+  Al-Fatihah → Ruku → rising → I'tidal → Sujood → sitting → Sujood → the second rakah →
+  Tashahhud → Taslim.
+- Check parts of your **posture** with a camera placed to your side. **Only three of those
+  steps are checked** — standing, ruku and sujood. Every other step is guidance only, with no
+  camera or microphone check. Exactly what is checked:
   - **Standing:** your back is upright and your knees are straight.
   - **Ruku:** your back is level with the floor and your knees are straight.
   - **Sujood:** your head is lower than your hips.
 
   **Not checked:** hand position (right over left in standing, hands on knees in ruku), and in
   sujood whether your palms, knees, toes, forehead and nose touch the ground.
-- Check that **Al-Fatihah was recited completely and in order**.
+- Check that **Al-Fatihah was recited completely and in order** (that is the only recitation
+  that is checked).
 
 It does **NOT**:
 - Assess **tajweed** or pronunciation quality.
