@@ -4,7 +4,8 @@
 import fajr from "./content/fajr.json";
 import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS } from "./config.js";
 import { t, has } from "./i18n/index.js";
-import { recordAttempt } from "./progress/store.js";
+import { recordAttempt, getAttempts } from "./progress/store.js";
+import { reviewSteps, occurrenceOf } from "./progress/review.js";
 import { resolveJourney, journeyAttemptKeys, journeyRakahs, rakahCount } from "./content/journey.js";
 import { evaluatePose, resetPoseMock } from "./pose/index.js";
 import { startCamera, stopCamera, runPoseLoop, shouldMirror } from "./pose/detector.js";
@@ -14,6 +15,7 @@ import { renderSetup } from "./ui/setup.js";
 import { videoCard, setupVideo } from "./ui/video.js";
 import { figureCard, diagramCard, setupFigure } from "./figure/figure.js";
 import { showSuccessSheet, showConfirmSheet, dismissSheet } from "./ui/sheet.js";
+import { showHelpSheet } from "./ui/help.js";
 
 // The journey is fajr.json's "order" resolved into step definitions.
 // A step that happens more than once (sujood four times, ruku twice, the whole second
@@ -35,6 +37,16 @@ let currentVideo = null; // demo video controller of the step on screen (see ui/
 // The camera setup screen is shown once per visit, before the first pose step.
 const FIRST_POSE = steps.findIndex((s) => s.type === "pose");
 let setupSeen = false;
+// لما يضغط "تدرّب مرة ثانية" من شاشة النهاية: نرجع لها بعد ما يخلص الخطوة
+let returnToFinishAfter = null;
+
+// وقت بداية الجولة الحالية. مراجعة النهاية تنظر للمحاولات اللي بعده فقط،
+// عشان تتكلم عن صلاة هذي الجولة مو عن أخطاء جولة قديمة.
+// السجل المخزّن في localStorage ما نلمسه: كل التاريخ يبقى محفوظاً.
+let runStartedAt = new Date().toISOString();
+const startRun = () => {
+  runStartedAt = new Date().toISOString();
+};
 const MAX_HINTS = 3;
 
 const esc = (s) =>
@@ -99,7 +111,11 @@ function wireClose() {
       text: t("close_confirm_text"),
       cancelLabel: t("stay"),
       confirmLabel: t("leave"),
-      onConfirm: () => go(0),
+      onConfirm: () => {
+        returnToFinishAfter = null;
+        startRun(); // خرج وبدأ من جديد: جولة جديدة
+        go(0);
+      },
     });
 }
 
@@ -142,7 +158,10 @@ function renderStep(step) {
   const isLast = current === steps.length - 1;
   app.innerHTML = `
     ${header()}
-    ${current > 0 ? `<button type="button" class="link back-link" id="back">‹ ${esc(t("back"))}</button>` : ""}
+    <div class="top-links">
+      ${current > 0 ? `<button type="button" class="link back-link" id="back">‹ ${esc(t("back"))}</button>` : "<span></span>"}
+      <button type="button" class="link help-link" id="help">${esc(t("need_help"))}</button>
+    </div>
     <h1>${esc(step.title.en)} <span class="ar" dir="rtl" lang="ar">${esc(step.title.ar)}</span></h1>
     <p class="instruction">${esc(step.instruction.en)}</p>
     ${step.type === "pose" ? `<p class="checks">${esc(t(`checks_${step.check}`))}</p>` : ""}
@@ -156,8 +175,20 @@ function renderStep(step) {
     </div>`;
 
   wireClose();
-  if (current > 0) app.querySelector("#back").onclick = () => go(current - 1);
-  app.querySelector("#next").onclick = () => go(current + 1);
+  if (current > 0) {
+    app.querySelector("#back").onclick = () => {
+      returnToFinishAfter = null; // غيّر رأيه: نلغي الرجوع لشاشة النهاية
+      go(current - 1);
+    };
+  }
+  app.querySelector("#next").onclick = () => {
+    // جاي من شاشة النهاية يتدرّب على خطوة؟ نرجّعه لها بدل ما يكمل الصلاة من جديد
+    if (returnToFinishAfter === current) {
+      returnToFinishAfter = null;
+      return go(steps.length);
+    }
+    go(current + 1);
+  };
 
   // If the video file turns out to be broken, swap the full animated figure in.
   let figure = setupFigure(app);
@@ -174,6 +205,12 @@ function renderStep(step) {
   });
   currentVideo = video;
 
+  app.querySelector("#help").onclick = () =>
+    showHelpSheet(step, {
+      onReplay: figure.replay,
+      onTryAgain: () => go(current), // يعيد بناء الخطوة: الكاميرا/التسجيل يبدأ من جديد
+    });
+
   const practice = app.querySelector("#practice");
   let stepCleanup = null;
   // المحاولات تُسجَّل بموضع الخطوة في الرحلة (sujood#1 و sujood#2)، مو باسمها فقط
@@ -189,13 +226,51 @@ function renderStep(step) {
 }
 
 function renderFinished() {
+  // الخطوات اللي تعب فيها المستخدم، من سجل محاولاته هو (مو من أي نص مولّد)
+  const rows = reviewSteps(getAttempts(), steps, ATTEMPT_KEYS, 3, runStartedAt);
+  const label = (row) => {
+    const { index, total } = occurrenceOf(row.key, ATTEMPT_KEYS);
+    const title = row.step?.title?.en ?? row.key;
+    return total > 1 ? t("review_nth", { title, x: index, n: total }) : title;
+  };
+  const note = (row) => (row.succeeded ? t("review_tries", { n: row.tries }) : t("review_never"));
+
   app.innerHTML = `
     ${header({ progress: false, close: false })}
     <h1>${esc(t("finished_title"))}</h1>
     <p class="instruction">${esc(t("finished_text"))}</p>
+    ${
+      rows.length
+        ? `<h2 class="review-title">${esc(t("review_title"))}</h2>
+           <ul class="review-list">
+             ${rows
+               .map(
+                 (row, i) => `<li class="review-row">
+                   <span class="review-step"><strong>${esc(label(row))}</strong>
+                     <span class="review-note">${esc(note(row))}</span></span>
+                   <button type="button" class="btn secondary" data-go="${row.index}" data-i="${i}">${esc(t("practice_again"))}</button>
+                 </li>`
+               )
+               .join("")}
+           </ul>`
+        : `<p class="review-all-good">${esc(t("review_all_good"))}</p>`
+    }
     <nav class="nav"><button class="btn" id="again">${esc(t("start_again"))}</button></nav>
     ${footer()}`;
-  app.querySelector("#again").onclick = () => go(0);
+
+  app.querySelector("#again").onclick = () => {
+    returnToFinishAfter = null;
+    startRun(); // جولة جديدة من أول الصلاة
+    go(0);
+  };
+  // "تدرّب مرة ثانية": نروح للخطوة، وبعد ما يخلصها نرجّعه لهذي الشاشة
+  app.querySelectorAll("[data-go]").forEach((btn) => {
+    btn.onclick = () => {
+      const index = Number(btn.dataset.go);
+      returnToFinishAfter = index;
+      go(index);
+    };
+  });
 }
 
 // ---------- pose step ----------

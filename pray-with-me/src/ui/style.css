@@ -75,6 +75,31 @@ h1 .ar { display: block; font-family: var(--font-ar); font-weight: 400; color: v
 }
 
 .back-link { display: inline-block; margin: 4px 0 0; padding-left: 0; }
+/* صف الروابط العلوي: الرجوع على جهة، و"تحتاج مساعدة؟" على الجهة الثانية */
+.top-links { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.help-link { padding-right: 0; }
+
+/* لوح المساعدة */
+.help-instruction { margin: 0 0 12px; }
+.help-dhikr { margin-bottom: 4px; }
+
+/* شاشة النهاية: الخطوات اللي تحتاج تدريب */
+.review-title { font-size: 1.1rem; margin: 24px 0 8px; }
+.review-list { list-style: none; padding: 0; margin: 0; }
+.review-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.review-step { display: flex; flex-direction: column; }
+.review-note { color: var(--muted); font-size: 0.85rem; }
+.review-row .btn { min-width: 0; flex: none; }
+.review-all-good { color: var(--accent); font-weight: 600; }
 .badge { background: var(--warn); color: #1a1a1a; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
 /* رقم الركعة الحالية، جنب شريط التقدّم */
 .rakah { flex: none; white-space: nowrap; color: var(--text); font-size: 0.8rem; font-weight: 700; }

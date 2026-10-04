@@ -17,7 +17,7 @@ export function dismissSheet() {
 // buttons: [{ label, primary, onClick }] — الزر الأساسي يأخذ التركيز.
 // dismissible: يسكّر بالضغط على الخلفية أو زر Escape.
 // focusIndex: أي زر يأخذ التركيز (في لوح التأكيد نركّز على "البقاء" مو على الخروج).
-function showSheet({ title, text, buttons, label, dismissible = true, focusIndex = 0 }) {
+function showSheet({ title, text, bodyHtml, buttons, label, dismissible = true, focusIndex = 0 }) {
   dismissSheet(); // ما نكدّس ألواح فوق بعض
   const host = document.getElementById("app");
   if (!host) return () => {};
@@ -28,11 +28,13 @@ function showSheet({ title, text, buttons, label, dismissible = true, focusIndex
     <section class="sheet" role="dialog" aria-modal="true" aria-label="${esc(label ?? title)}">
       <h2 class="sheet-title">${esc(title)}</h2>
       ${text ? `<p class="sheet-text">${esc(text)}</p>` : ""}
+      ${bodyHtml ?? ""}
       <div class="sheet-actions">
         ${buttons
-          .map(
-            (b, i) =>
-              `<button type="button" class="btn block${b.primary ? "" : " secondary"}" data-i="${i}">${esc(b.label)}</button>`
+          .map((b, i) =>
+            b.href
+              ? `<a class="btn block secondary" data-i="${i}" href="${esc(b.href)}" target="_blank" rel="noopener noreferrer">${esc(b.label)}</a>`
+              : `<button type="button" class="btn block${b.primary ? "" : " secondary"}" data-i="${i}">${esc(b.label)}</button>`
           )
           .join("")}
       </div>
@@ -50,7 +52,13 @@ function showSheet({ title, text, buttons, label, dismissible = true, focusIndex
   }
 
   buttons.forEach((b, i) => {
-    backdrop.querySelector(`[data-i="${i}"]`).onclick = () => {
+    const el = backdrop.querySelector(`[data-i="${i}"]`);
+    if (!el) return;
+    if (b.href) {
+      el.onclick = () => close(); // الرابط يفتح بنفسه، بس نسكّر اللوح
+      return;
+    }
+    el.onclick = () => {
       close();
       b.onClick?.();
     };
@@ -77,6 +85,12 @@ export function showSuccessSheet({ title, text, onContinue }) {
     text,
     buttons: [{ label: t("continue"), primary: true, onClick: onContinue }],
   });
+}
+
+// لوح عام فيه محتوى وأزرار (نستخدمه في لوح "تحتاج مساعدة؟").
+// bodyHtml لازم يكون مُنظَّفاً من المُنادي (شوفوا ui/help.js).
+export function showActionSheet({ title, bodyHtml, actions }) {
+  return showSheet({ title, bodyHtml, buttons: actions, focusIndex: actions.findIndex((a) => a.primary) });
 }
 
 // لوح التأكيد عند الضغط على زر الخروج (✕).

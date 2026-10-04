@@ -412,7 +412,7 @@ export function setupFigure(root) {
   if (!card) {
     // الخطوة الحالية ما فيها شكل: الخطوة الجاية تبدأ من وضعيتها مباشرة بدون حركة
     lastPoseName = null;
-    return { dispose() {} };
+    return { replay() {}, dispose() {} };
   }
 
   // بطاقة مخطط ساكنة (تحت الفيديو): نرسم المنظر الأمامي مرة وحدة بدون حركة
@@ -422,7 +422,7 @@ export function setupFigure(root) {
     layer.querySelector(".fig-highlights")?.classList.add("show");
     card.classList.add("front-shown");
     lastPoseName = "sujood";
-    return { dispose() {} };
+    return { replay() {}, dispose() {} };
   }
 
   const svg = card.querySelector(".fig-svg");
@@ -577,6 +577,8 @@ export function setupFigure(root) {
   lastPoseName = toName === "taslim" ? "sitting" : toName;
 
   return {
+    // نفس اللي يسويه زر الإعادة، عشان لوح المساعدة يقدر يعيد الحركة
+    replay: animate,
     dispose() {
       disposed = true;
       stopAll();

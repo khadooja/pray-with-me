@@ -469,4 +469,72 @@ test("leaving taslim mid-turn cancels the head-turn loop", () => {
   assert.equal(pending(), 0, "no head-turn frames should outlive the step");
 });
 
+// ---------------------------------------------------------------- practice again
+// Mirrors main.js: "Practice again" remembers the step, and Next from there returns
+// to the finish screen instead of continuing through the prayer.
+function makeRouter() {
+  const nav = makeApp();
+  let current = null;
+  let returnToFinishAfter = null;
+  const api = {
+    app: nav.app,
+    at: () => current,
+    go(i) {
+      current = i;
+      if (i === JOURNEY.length) { nav.go({ id: "__finish__", type: "guided" }); return; }
+      nav.go(JOURNEY[i]);
+    },
+    practiceAgain(i) { returnToFinishAfter = i; api.go(i); },
+    next() {
+      if (returnToFinishAfter === current) { returnToFinishAfter = null; return api.go(JOURNEY.length); }
+      api.go(current + 1);
+    },
+    back() { returnToFinishAfter = null; api.go(current - 1); },
+    pendingReturn: () => returnToFinishAfter,
+    dispose: nav.dispose,
+  };
+  return api;
+}
+
+test("Practice again jumps to the step and Next returns to the finish screen", () => {
+  reset();
+  rafTimeOffset = 8;
+  const r = makeRouter();
+  r.go(JOURNEY.length); // the finish screen
+  for (let i = 0; i < 10; i++) tick(30);
+
+  const target = fajr.order.indexOf("ruku");
+  r.practiceAgain(target);
+  for (let i = 0; i < 40; i++) tick(30);
+  assert.equal(r.at(), target, "it should jump to the chosen step");
+
+  r.next();
+  for (let i = 0; i < 20; i++) tick(30);
+  assert.equal(r.at(), JOURNEY.length, "Next must land back on the finish screen");
+  assert.equal(r.pendingReturn(), null, "the pending return must be cleared");
+
+  r.dispose();
+  assert.deepEqual(errors.map(String), [], "the practice-again round trip threw");
+  assert.equal(pending(), 0, "no callbacks should outlive the round trip");
+});
+
+test("Back during a practice-again cancels the return instead of trapping the user", () => {
+  reset();
+  rafTimeOffset = 8;
+  const r = makeRouter();
+  const target = fajr.order.indexOf("sujood");
+  r.practiceAgain(target);
+  for (let i = 0; i < 30; i++) tick(30);
+  r.back();
+  for (let i = 0; i < 20; i++) tick(30);
+  assert.equal(r.pendingReturn(), null, "Back must clear the pending return");
+  assert.equal(r.at(), target - 1, "Back should move one step back, not to the finish screen");
+  r.next();
+  for (let i = 0; i < 20; i++) tick(30);
+  assert.equal(r.at(), target, "and Next then continues normally through the prayer");
+  r.dispose();
+  assert.deepEqual(errors.map(String), []);
+  assert.equal(pending(), 0);
+});
+
 console.log(`\n${passed} passed${process.exitCode ? ", some FAILED" : ""}`);
