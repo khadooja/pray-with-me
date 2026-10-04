@@ -270,6 +270,94 @@ test("every pose and every transition frame fits inside the fixed frame", () => 
   }
 });
 
+// ---------- the sitting pose (jalsa and tashahhud) ----------
+test("sitting: the torso is within 5 degrees of vertical", () => {
+  const j = joints.sitting;
+  const fromVertical = 90 - inclineFromHorizontal(j.hip, j.shoulder);
+  assert.ok(Math.abs(fromVertical) <= 5, `torso is ${fromVertical.toFixed(2)} degrees off vertical`);
+});
+
+test("sitting: both knees rest on the mat", () => {
+  const j = joints.sitting;
+  for (const side of ["Near", "Far"]) {
+    const gap = Math.abs(j[`knee${side}`].y - F);
+    assert.ok(gap <= FLOOR_TOL, `${side} knee is ${gap.toFixed(2)}px off the mat`);
+  }
+});
+
+test("sitting: the body rests on the heel of the flat foot", () => {
+  const j = joints.sitting;
+  const hipHeight = F - j.hip.y;
+  assert.ok(hipHeight > 0 && hipHeight <= 30,
+    `the hip should sit low on the heel, it is ${hipHeight.toFixed(1)}px up`);
+  assert.ok(Math.abs(j.hip.x - j.ankleFar.x) <= 16,
+    "the hip should sit over the flat foot, not in front of or behind it");
+});
+
+test("sitting: the upright foot has its toes on the mat and its heel raised", () => {
+  const j = joints.sitting;
+  assert.ok(Math.abs(j.toeNear.y - F) <= FLOOR_TOL,
+    `the upright foot's toes are ${(j.toeNear.y - F).toFixed(2)}px off the mat`);
+  const heel = F - j.ankleNear.y;
+  assert.ok(heel >= 14, `the heel is only ${heel.toFixed(1)}px up, it should be clearly raised`);
+  assert.ok(j.toeNear.x > j.ankleNear.x, "the toes should point forward, toward the qibla");
+});
+
+test("sitting: the other foot is laid flat under the body", () => {
+  const j = joints.sitting;
+  assert.ok(F - j.ankleFar.y <= 12, "the flat foot's ankle should stay close to the mat");
+  assert.ok(F - j.toeFar.y <= 6, "the flat foot's toes should rest on the mat");
+  assert.ok(j.toeFar.x < j.ankleFar.x, "the flat foot should point backward, under the body");
+});
+
+test("sitting: the thighs run roughly along the mat, knees forward of the hips", () => {
+  const j = joints.sitting;
+  const incline = inclineFromHorizontal(j.hip, j.kneeNear);
+  assert.ok(incline <= 25, `the thigh is ${incline.toFixed(1)} degrees off the mat`);
+  assert.ok(j.kneeNear.x > j.hip.x, "the knees should be forward of the hips");
+});
+
+test("sitting: the hands rest on the thighs near the knees", () => {
+  const j = joints.sitting;
+  for (const side of ["Near", "Far"]) {
+    const d = Math.hypot(j[`wrist${side}`].x - j[`knee${side}`].x, j[`wrist${side}`].y - j[`knee${side}`].y);
+    assert.ok(d <= 30, `the ${side} hand is ${d.toFixed(1)}px from the knee`);
+  }
+});
+
+test("sitting: nothing is pushed below the mat", () => {
+  assert.ok(lowestY(joints.sitting) - F <= 1, "a body part is below the mat");
+});
+
+test("the sitting transitions are staged through the kneeling stage", () => {
+  assert.deepEqual(pathBetween("sujood", "sitting"), ["sujood", "palmsDown", "kneel", "sitting"]);
+  assert.deepEqual(pathBetween("sitting", "sujood"), ["sitting", "kneel", "palmsDown", "sujood"]);
+  assert.deepEqual(pathBetween("sitting", "standing"), ["sitting", "kneel", "standing"]);
+  assert.deepEqual(pathBetween("standing", "sitting"), ["standing", "kneel", "sitting"]);
+  // the paths that already existed must not have changed
+  assert.deepEqual(pathBetween("standing", "sujood"), ["standing", "kneel", "palmsDown", "sujood"]);
+  assert.deepEqual(pathBetween("ruku", "sujood"), ["ruku", "standing", "kneel", "palmsDown", "sujood"]);
+  assert.deepEqual(pathBetween("sujood", "standing"), ["sujood", "palmsDown", "kneel", "standing"]);
+});
+
+test("every frame of the sitting transitions keeps the toes on the mat, nothing below it", () => {
+  for (const [a, b] of [["sujood", "sitting"], ["sitting", "sujood"], ["sitting", "standing"], ["standing", "sitting"]]) {
+    const path = pathBetween(a, b);
+    for (let s2 = 0; s2 < path.length - 1; s2++) {
+      const A = ALL_POSES[path[s2]], B = ALL_POSES[path[s2 + 1]];
+      for (let i = 0; i <= 24; i++) {
+        const k = i / 24;
+        const scale = (A.armScale ?? 1) + ((B.armScale ?? 1) - (A.armScale ?? 1)) * k;
+        const j = jointsFor(lerpAngles(A.angles, B.angles, k), scale);
+        assert.ok(Math.abs(j.toeNear.y - F) <= 0.01,
+          `${a}->${b} @${k.toFixed(2)}: the toes left the mat`);
+        assert.ok(lowestY(j) - F <= 1,
+          `${a}->${b} @${k.toFixed(2)}: a body part went ${(lowestY(j) - F).toFixed(2)}px below the mat`);
+      }
+    }
+  }
+});
+
 // ---------- the front view of sujood ----------
 const FP = frontPoints();
 const CONTACTS = SUJOOD_FRONT.contacts.map((c) => ({ ...c, p: FP[c.at] }));

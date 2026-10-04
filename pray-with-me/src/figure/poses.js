@@ -98,6 +98,31 @@ export const POSES = {
     ],
     caption: "figure_seven_points",
   },
+
+  // الجلوس (بين السجدتين وفي التشهد): الجذع معتدل، والمصلي جالس على قدمه اليسرى
+  // وهي مفروشة تحته، والقدم اليمنى منتصبة وأصابعها مثنية على الأرض متجهة للقبلة (للأمام).
+  // الفخذان شبه أفقيين للأمام، والركبتان على الأرض، والساقان مثنيتان تحت الجسم،
+  // واليدان على الفخذين قرب الركبتين.
+  //
+  // ⚠️ **تفاصيل القدمين في انتظار مراجعة المختصة الشرعية**: أي قدم تُفرش وأي قدم تُنصب،
+  // وزاوية الأصابع، والمسافة بين القدمين. الأرقام هنا تقريب هندسي فقط.
+  //
+  // ملاحظة رسم: الجهة "القريبة" (Near) هنا هي الرِّجل **اليمنى** (المنتصبة)، عشان
+  // القدم المنتصبة — وهي نقطة التعليم والتوضيح — تنرسم قدّام الجسم مو مخفية وراه.
+  sitting: {
+    angles: {
+      torso: 90, neck: 90,
+      upperArmNear: -72.6, forearmNear: -32.7, handNear: 0,
+      upperArmFar: -81.1, forearmFar: -27.6, handFar: 0,
+      // اليمنى: منتصبة، العقب مرفوع ٢١ بكسل والأصابع على الأرض
+      thighNear: -15.8, shinNear: 156.3, footNear: -76.2,
+      // اليسرى: مفروشة تحت الجسم، باطن القدم على الأرض والأصابع للخلف
+      thighFar: -16.2, shinFar: 172.3, footFar: -164.2,
+    },
+    armScale: 1,
+    highlights: [{ type: "dot", at: "toeNear" }],
+    caption: "figure_sitting_foot",
+  },
 };
 
 // ---------- وضعيات وسطية للحركة فقط (ما تظهر كخطوة) ----------
@@ -129,20 +154,38 @@ export const STAGES = {
 // كل الوضعيات (المعروضة + الوسطية) في مكان واحد، للحركة والاختبارات
 export const ALL_POSES = { ...POSES, ...STAGES };
 
-const TO_SUJOOD = ["standing", "kneel", "palmsDown", "sujood"];
+// "سُلّم" الحركة من الوقوف إلى السجود. الجلوس متفرّع من "kneel"، لأن الحركة الحقيقية
+// من السجود للجلوس هي: نرفع الجسم على الركبتين، ثم نجلس على القدم.
+//
+//   standing ── kneel ── palmsDown ── sujood
+//                 └──── sitting
+const LADDER = ["standing", "kneel", "palmsDown", "sujood"];
+const SITTING = "sitting";
+const rungOf = (name) => LADDER.indexOf(name);
 
-// مسار الحركة بين وضعيتين: قائمة أسماء وضعيات نمر عليها بالترتيب.
-// النزول للسجود (والرجوع منه) يمر بالمراحل، وأي انتقال ثاني مباشر.
+// المشي على السُلّم بين درجتين (في أي اتجاه)
+function ladderWalk(a, b) {
+  const i = rungOf(a), j = rungOf(b);
+  return i <= j ? LADDER.slice(i, j + 1) : LADDER.slice(j, i + 1).reverse();
+}
+
+// مسار الحركة بين وضعيتين: قائمة أسماء وضعيات نمر عليها بالترتيب،
+// عشان ما يطفو الجسم فوق السجادة في الانتقالات الطويلة.
 export function pathBetween(from, to) {
   if (from === to) return [to];
-  if (to === "sujood") {
-    const head = from === "standing" ? [] : [from];
-    return [...head, ...TO_SUJOOD];
-  }
-  if (from === "sujood") {
-    const path = [...TO_SUJOOD].reverse(); // sujood → palmsDown → kneel → standing
-    return to === "standing" ? path : [...path, to];
-  }
+  const fromOnLadder = rungOf(from) >= 0;
+  const toOnLadder = rungOf(to) >= 0;
+
+  // الجلوس يدخل ويخرج عبر "kneel"
+  if (from === SITTING && toOnLadder) return [SITTING, ...ladderWalk("kneel", to)];
+  if (to === SITTING && fromOnLadder) return [...ladderWalk(from, "kneel"), SITTING];
+  if (from === SITTING) return [SITTING, ...ladderWalk("kneel", "standing"), to];
+  if (to === SITTING) return [from, ...ladderWalk("standing", "kneel"), SITTING];
+
+  if (fromOnLadder && toOnLadder) return ladderWalk(from, to);
+  // وضعيات خارج السُلّم (التكبير والركوع) تمر عبر الوقوف
+  if (toOnLadder) return [from, ...ladderWalk("standing", to)];
+  if (fromOnLadder) return [...ladderWalk(from, "standing"), to];
   return [from, to];
 }
 
@@ -250,5 +293,8 @@ export const POSE_FOR_STEP = {
   rising: "standing", // الرفع من الركوع: يتحرك لأعلى من الركوع
   itidal: "standing",
   sujood: "sujood",
+  jalsa: "sitting", // الجلسة بين السجدتين
   second_rakah: "standing", // يقوم من السجود: نفس مسار النزول بالعكس
+  tashahhud: "sitting",
+  // التسليم بدون شكل: وضعيته (الالتفات يميناً ويساراً) ما تبيّن في المنظر الجانبي
 };

@@ -383,4 +383,44 @@ test("the two sujood occurrences are the same definition and both behave", () =>
   assert.deepEqual(errors.map(String), []);
 });
 
+test("sujood -> sitting -> sujood and back throws no errors", () => {
+  reset();
+  rafTimeOffset = 8;
+  const sujood = byId.sujood, jalsa = byId.jalsa, tashahhud = byId.tashahhud;
+  const nav = makeApp();
+  for (const step of [sujood, jalsa, sujood, jalsa, sujood]) {
+    nav.go(step);
+    for (let i = 0; i < 70; i++) tick(16);
+    assert.equal(cards(nav.app).length, 1, `${step.id} should show a figure`);
+  }
+  // and the sitting steps at the end of the prayer
+  for (const step of [tashahhud, byId.taslim, tashahhud]) {
+    nav.go(step);
+    for (let i = 0; i < 70; i++) tick(16);
+    assert.equal(cards(nav.app).length, POSE_FOR_STEP[step.id] ? 1 : 0, `${step.id}`);
+  }
+  nav.dispose();
+  assert.deepEqual(errors.map(String), [], "sitting navigation threw");
+  assert.equal(pending(), 0, "callbacks left pending after the sitting steps");
+});
+
+test("interrupting the sujood -> sitting transition is clean", () => {
+  reset();
+  rafTimeOffset = 8;
+  const nav = makeApp();
+  nav.go(byId.sujood);
+  for (let i = 0; i < 70; i++) tick(16);
+  nav.go(byId.jalsa);  // start rising to sitting
+  tick(16);
+  tick(16);
+  nav.go(byId.sujood); // interrupt, go straight back down
+  tick(16);
+  nav.go(byId.jalsa);
+  for (let i = 0; i < 60; i++) tick(16);
+  assert.deepEqual(errors.map(String), [], "interrupted sitting transition threw");
+  assert.equal(cards(nav.app).length, 1);
+  nav.dispose();
+  assert.equal(pending(), 0);
+});
+
 console.log(`\n${passed} passed${process.exitCode ? ", some FAILED" : ""}`);

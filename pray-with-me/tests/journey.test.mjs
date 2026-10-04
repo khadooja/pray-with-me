@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { POSE_FOR_STEP } from "../src/figure/poses.js";
+import { journeyAttemptKeys } from "../src/progress/store.js";
 
 const fajr = JSON.parse(readFileSync(new URL("../src/content/fajr.json", import.meta.url), "utf8"));
 const byId = Object.fromEntries(fajr.steps.map((s) => [s.id, s]));
@@ -116,8 +117,9 @@ test("the new steps carry TODO text, with no invented religious content", () => 
 });
 
 test("the figure mapping covers the right steps and no others", () => {
-  const withFigure = ["takbir", "standing", "fatiha", "takbir_transition", "ruku", "rising", "itidal", "sujood", "second_rakah"];
-  const withoutFigure = ["jalsa", "tashahhud", "taslim"];
+  const withFigure = ["takbir", "standing", "fatiha", "takbir_transition", "ruku", "rising",
+    "itidal", "sujood", "jalsa", "second_rakah", "tashahhud"];
+  const withoutFigure = ["taslim"];
   assert.deepEqual(Object.keys(POSE_FOR_STEP).sort(), [...withFigure].sort());
   for (const id of withoutFigure) {
     assert.equal(POSE_FOR_STEP[id], undefined, `${id} should show no figure yet`);
@@ -130,6 +132,43 @@ test("the figure mapping covers the right steps and no others", () => {
   for (const id of Object.keys(POSE_FOR_STEP)) {
     assert.ok(byId[id], `POSE_FOR_STEP names an unknown step "${id}"`);
   }
+});
+
+test("the sitting steps use the sitting pose, and taslim stays without a figure", () => {
+  assert.equal(POSE_FOR_STEP.jalsa, "sitting");
+  assert.equal(POSE_FOR_STEP.tashahhud, "sitting");
+  assert.equal(POSE_FOR_STEP.taslim, undefined, "taslim should still show no figure");
+});
+
+// ---------- attempts are recorded per position, not just per step id ----------
+const JOURNEY = fajr.order.map((id) => byId[id]);
+const KEYS = journeyAttemptKeys(JOURNEY);
+
+test("every position in the journey gets its own attempt key", () => {
+  assert.equal(KEYS.length, fajr.order.length);
+  assert.equal(new Set(KEYS).size, KEYS.length, `attempt keys are not unique: ${KEYS.join(", ")}`);
+});
+
+test("the two prostrations are logged separately", () => {
+  const sujoodKeys = KEYS.filter((k) => k.startsWith("sujood#"));
+  assert.deepEqual(sujoodKeys, ["sujood#1", "sujood#2"],
+    "the first and second sujood must be distinguishable in the progress data");
+  // ...while still being the same definition, so the content is written once
+  const positions = fajr.order.map((id, i) => (id === "sujood" ? i : -1)).filter((i) => i >= 0);
+  assert.equal(JOURNEY[positions[0]], JOURNEY[positions[1]], "the definition must stay shared");
+});
+
+test("the repeated transition takbir is also logged separately", () => {
+  assert.deepEqual(KEYS.filter((k) => k.startsWith("takbir_transition#")),
+    ["takbir_transition#1", "takbir_transition#2"]);
+});
+
+test("an attempt key always names its step, so eval can group by step", () => {
+  KEYS.forEach((key, i) => {
+    const [id, n] = key.split("#");
+    assert.equal(id, JOURNEY[i].id, `key ${key} does not match step ${JOURNEY[i].id}`);
+    assert.ok(Number(n) >= 1, `key ${key} has no occurrence number`);
+  });
 });
 
 console.log(`\n${passed} passed${process.exitCode ? ", some FAILED" : ""}`);

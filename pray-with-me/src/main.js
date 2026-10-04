@@ -4,7 +4,7 @@
 import fajr from "./content/fajr.json";
 import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS } from "./config.js";
 import { t, has } from "./i18n/index.js";
-import { recordAttempt } from "./progress/store.js";
+import { recordAttempt, journeyAttemptKeys } from "./progress/store.js";
 import { evaluatePose, resetPoseMock } from "./pose/index.js";
 import { startCamera, stopCamera, runPoseLoop, shouldMirror } from "./pose/detector.js";
 import { preloadASR, startRecording, transcribe, compareRecitation } from "./speech/index.js";
@@ -26,6 +26,9 @@ const steps = (fajr.order ?? fajr.steps.map((s) => s.id))
     return step;
   })
   .filter(Boolean);
+
+// مفتاح تسجيل المحاولات لكل موضع في الرحلة: sujood#1 و sujood#2 ...
+const ATTEMPT_KEYS = journeyAttemptKeys(steps);
 const app = document.getElementById("app");
 let current = 0;
 let cleanup = null;
@@ -174,8 +177,10 @@ function renderStep(step) {
 
   const practice = app.querySelector("#practice");
   let stepCleanup = null;
-  if (step.type === "pose") stepCleanup = renderPose(step, practice);
-  else if (step.type === "speech") stepCleanup = renderSpeech(step, practice);
+  // المحاولات تُسجَّل بموضع الخطوة في الرحلة (sujood#1 و sujood#2)، مو باسمها فقط
+  const attemptKey = ATTEMPT_KEYS[current] ?? step.id;
+  if (step.type === "pose") stepCleanup = renderPose(step, practice, attemptKey);
+  else if (step.type === "speech") stepCleanup = renderSpeech(step, practice, attemptKey);
   cleanup = () => {
     video.dispose();
     figure.dispose();
@@ -196,7 +201,7 @@ function renderFinished() {
 
 // ---------- pose step ----------
 
-function renderPose(step, root) {
+function renderPose(step, root, attemptKey) {
   root.innerHTML = `
     <p class="hint">${esc(t("camera_hint"))}
       <button class="link" id="setup-help">${esc(t("setup_help"))}</button></p>
@@ -256,7 +261,7 @@ function renderPose(step, root) {
       setFeedback(t("pose_done"), "ok");
       playSuccess();
       vibrateSuccess();
-      recordAttempt(step.id, true);
+      recordAttempt(attemptKey, true);
       stopLoop?.();
       stopLoop = null;
       celebrate(step.check);
@@ -326,13 +331,13 @@ function renderPose(step, root) {
     stopCamera(stream);
     // An attempt that was started but not finished counts as not completed,
     // unless the user just opened "Setup help" (they come back to this step).
-    if (started && !done && !leavingForSetup) recordAttempt(step.id, false);
+    if (started && !done && !leavingForSetup) recordAttempt(attemptKey, false);
   };
 }
 
 // ---------- speech step ----------
 
-function renderSpeech(step, root) {
+function renderSpeech(step, root, attemptKey) {
   root.innerHTML = `
     <section class="card">
       <p class="label">${esc(t("recite_this"))}</p>
@@ -400,7 +405,7 @@ function renderSpeech(step, root) {
       if (!USE_MOCK && asr.status !== "ready") setAsr({ status: "ready" });
       if (disposed) return;
       const result = compareRecitation(text, step.reference);
-      recordAttempt(step.id, result.complete);
+      recordAttempt(attemptKey, result.complete);
       if (result.complete) {
         setFeedback(esc(t("speech_complete")), "ok");
         celebrate(step.id);
