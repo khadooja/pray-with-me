@@ -40,6 +40,25 @@ It does **NOT**:
 
 It is a practice aid. For religious questions, please ask a qualified scholar.
 
+### Recitation checking is currently OFF
+
+The Al-Fatihah check is behind a switch, `SPEECH_CHECK_ENABLED` in `src/config.js`, and it is
+currently **`false`**.
+
+- **Off (today):** the Al-Fatihah step is "listen and repeat" — the verses are shown, you recite
+  at your own pace and press a button to continue. **No microphone is requested, no speech model
+  is downloaded, and nothing you say is judged.** The app checks posture only.
+- **On:** the step records your recitation on-device and tells you whether you recited every word
+  of Al-Fatihah, in order.
+
+It is off because `npm run eval:speech` showed the current matcher reporting **8 words as
+"missing" on a recitation that was in fact complete**. A false accusation is worse for a beginner
+than no check, so the check stays off until the evaluation numbers justify turning it on. That
+decision belongs to the AI teammate.
+
+A test parses `src/config.js` and fails if this section stops matching the actual flag.
+
+
 ## Design decisions
 
 1. **Audio cues, not just text.** In sujood your face is on the floor, so you can't read the

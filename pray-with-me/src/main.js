@@ -2,7 +2,7 @@
 // Each step type (guided / pose / speech) renders its own practice area and
 // returns a cleanup function that go() calls before showing another step.
 import fajr from "./content/fajr.json";
-import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS } from "./config.js";
+import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS, SPEECH_CHECK_ENABLED, shouldPreloadASR } from "./config.js";
 import { t, has } from "./i18n/index.js";
 import { recordAttempt, getAttempts } from "./progress/store.js";
 import { reviewSteps, occurrenceOf } from "./progress/review.js";
@@ -16,6 +16,8 @@ import { videoCard, setupVideo } from "./ui/video.js";
 import { figureCard, diagramCard, setupFigure } from "./figure/figure.js";
 import { showSuccessSheet, showConfirmSheet, dismissSheet } from "./ui/sheet.js";
 import { showHelpSheet } from "./ui/help.js";
+import { renderListenStep } from "./ui/listen-step.js";
+import { footerKey, speechChecksKey } from "./ui/scope.js";
 
 // The journey is fajr.json's "order" resolved into step definitions.
 // A step that happens more than once (sujood four times, ruku twice, the whole second
@@ -130,7 +132,7 @@ function celebrate(key) {
 }
 
 function footer() {
-  return `<footer class="footer">${esc(t("footer"))}</footer>`;
+  return `<footer class="footer">${esc(t(footerKey()))}</footer>`;
 }
 
 // hasVideo: the demo clip already has the voice, so the audio player stays hidden
@@ -165,6 +167,7 @@ function renderStep(step) {
     <h1>${esc(step.title.en)} <span class="ar" dir="rtl" lang="ar">${esc(step.title.ar)}</span></h1>
     <p class="instruction">${esc(step.instruction.en)}</p>
     ${step.type === "pose" ? `<p class="checks">${esc(t(`checks_${step.check}`))}</p>` : ""}
+    ${step.type === "speech" ? `<p class="checks">${esc(t(speechChecksKey()))}</p>` : ""}
     ${mediaFor(step)}
     ${dhikrCard(step.dhikr, Boolean(step.video))}
     <section class="practice" id="practice"></section>
@@ -216,7 +219,12 @@ function renderStep(step) {
   // المحاولات تُسجَّل بموضع الخطوة في الرحلة (sujood#1 و sujood#2)، مو باسمها فقط
   const attemptKey = ATTEMPT_KEYS[current] ?? step.id;
   if (step.type === "pose") stepCleanup = renderPose(step, practice, attemptKey);
-  else if (step.type === "speech") stepCleanup = renderSpeech(step, practice, attemptKey);
+  else if (step.type === "speech") {
+    // فحص التلاوة مطفأ؟ "اسمع وردّد": بدون مايك ولا حكم ولا تسجيل محاولة
+    stepCleanup = SPEECH_CHECK_ENABLED
+      ? renderSpeech(step, practice, attemptKey)
+      : renderListenStep(step, practice, () => go(current + 1));
+  }
   cleanup = () => {
     video.dispose();
     figure.dispose();
@@ -540,5 +548,5 @@ function startAsrPreload() {
     });
 }
 
-if (!USE_MOCK) startAsrPreload();
+if (shouldPreloadASR()) startAsrPreload();
 go(0);
