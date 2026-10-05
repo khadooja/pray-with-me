@@ -1,6 +1,74 @@
 {
   "_note": "Structure for the full Fajr prayer (two rakahs). The content teammate completes every TODO (instructions, dhikr, sources, audio) and has everything Sharia-reviewed before release. Do not invent hadith numbers or sources. Every step is defined ONCE here; \"order\" lists it as many times as the prayer performs it, so the second rakah reuses the same reviewed text.",
   "prayer": "fajr",
+  "preparation": [
+    {
+      "id": "time",
+      "title": {
+        "ar": "دخول الوقت",
+        "en": "Prayer time"
+      },
+      "text": "The time for Fajr has started.",
+      "source": "الدرر السنية، الموسوعة الفقهية: اشتراط دخول الوقت",
+      "url": "https://dorar.net/feqhia/831",
+      "reviewed": false
+    },
+    {
+      "id": "wudu",
+      "title": {
+        "ar": "الوضوء",
+        "en": "Wudu"
+      },
+      "text": "You have made wudu (ablution).",
+      "source": "الدرر السنية، الموسوعة الفقهية: الطهارة من الحدث",
+      "url": "https://dorar.net/feqhia/1113",
+      "reviewed": false
+    },
+    {
+      "id": "purity",
+      "title": {
+        "ar": "الطهارة",
+        "en": "Purity"
+      },
+      "text": "Your body, clothes and place are clean.",
+      "source": "الدرر السنية، الموسوعة الفقهية: الطهارة من النجس",
+      "url": "https://dorar.net/feqhia/826",
+      "reviewed": false
+    },
+    {
+      "id": "cover",
+      "title": {
+        "ar": "ستر العورة",
+        "en": "Covering"
+      },
+      "text": "Your body is covered as required.",
+      "source": "الدرر السنية، الموسوعة الفقهية: حد العورة في الصلاة",
+      "url": "https://dorar.net/feqhia/874",
+      "reviewed": false
+    },
+    {
+      "id": "qibla",
+      "title": {
+        "ar": "استقبال القبلة",
+        "en": "Facing the Qibla"
+      },
+      "text": "You are facing the direction of the Ka'bah.",
+      "source": "الدرر السنية، الموسوعة الفقهية: استقبال القبلة",
+      "url": "https://dorar.net/feqhia/857",
+      "reviewed": false
+    },
+    {
+      "id": "intent",
+      "title": {
+        "ar": "النية",
+        "en": "Intention"
+      },
+      "text": "You intend in your heart to pray Fajr.",
+      "source": "الدرر السنية، الموسوعة الفقهية: النية",
+      "url": "https://dorar.net/feqhia/881",
+      "reviewed": false
+    }
+  ],
   "order": [
     "takbir",
     "standing",

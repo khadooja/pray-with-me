@@ -45,3 +45,9 @@ export const SPEECH_CHECK_ENABLED = false;
 
 // هل ننزّل نموذج Whisper أصلاً؟ قرار واحد في مكان واحد عشان نقدر نختبره.
 export const shouldPreloadASR = () => !USE_MOCK && SPEECH_CHECK_ENABLED;
+
+// شاشة "قبل أن تصلي" (الوقت، الوضوء، الطهارة، الستر، القبلة، النية).
+// ⚠️ **شغّالة بمحتوى مسودّة**: مالكة المحتوى تراجعه الآن، والتعديلات بتجي بعدين.
+// كل عنصر في "preparation" داخل fajr.json عليه "reviewed": false لحد ما تعتمده.
+// الشاشة تذكير للمستخدم فقط: التطبيق ما يفحص أياً منها، وما نسجّل الاختيارات ولا نرسلها.
+export const PREPARATION_SCREEN_ENABLED = true;

@@ -296,6 +296,89 @@ audio { width: 100%; margin-top: 8px; }
 /* Mirror only for a user-facing (selfie) camera; main.js sets .mirrored. */
 .stage.mirrored video, .stage.mirrored canvas { transform: scaleX(-1); }
 
+/* ---- شاشة "قبل أن تصلي" (src/ui/preparation.js) ---- */
+.prep-label {
+  margin: 8px 0 2px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.prep-title { margin: 0 0 10px; font-size: 1.5rem; }
+.prep-title .ar { display: block; font-family: var(--font-ar); font-weight: 400; color: var(--accent); }
+.prep-title .en { display: block; }
+
+.prep-progress { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
+.prep-segments { display: flex; gap: 5px; flex: 1; }
+.prep-seg {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background 0.2s ease;
+}
+.prep-seg.on { background: var(--accent); }
+.prep-count { flex: none; color: var(--muted); font-size: 0.82rem; font-weight: 700; }
+
+.prep-cards { display: flex; flex-direction: column; gap: 10px; }
+.prep-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  color: var(--text);
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  padding: 14px;
+  font: inherit;
+  cursor: pointer;
+}
+.prep-card.on { border-color: var(--accent); }
+.prep-card:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+.prep-icon { flex: none; width: 26px; height: 26px; color: var(--accent); }
+.prep-body { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.prep-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.prep-ar { font-family: var(--font-ar); color: var(--accent); font-size: 0.95rem; }
+.prep-text { color: var(--muted); font-size: 0.9rem; }
+.prep-soon {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+/* دائرة الصح: فاضية، وتتعلّم لما يضغط البطاقة */
+.prep-check {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+}
+.prep-card.on .prep-check {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 3px var(--card);
+}
+
+.prep-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 18px 0 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.prep-info { flex: none; width: 18px; height: 18px; }
+.prep-sources { margin: 4px 0 0; padding-left: 1.2em; color: var(--muted); font-size: 0.82rem; }
+.prep-sources li { margin-bottom: 6px; }
+.prep-sources a { color: var(--accent); }
+.prep-hint { margin: 8px 0 0; text-align: center; color: var(--muted); font-size: 0.82rem; }
+
 /* Camera setup screen (src/ui/setup.js) */
 .setup-art {
   display: block;

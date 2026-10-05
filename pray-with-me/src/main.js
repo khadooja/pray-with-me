@@ -2,7 +2,8 @@
 // Each step type (guided / pose / speech) renders its own practice area and
 // returns a cleanup function that go() calls before showing another step.
 import fajr from "./content/fajr.json";
-import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS, SPEECH_CHECK_ENABLED, shouldPreloadASR } from "./config.js";
+import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS, SPEECH_CHECK_ENABLED, shouldPreloadASR,
+  PREPARATION_SCREEN_ENABLED } from "./config.js";
 import { t, has } from "./i18n/index.js";
 import { recordAttempt, getAttempts } from "./progress/store.js";
 import { reviewSteps, occurrenceOf } from "./progress/review.js";
@@ -18,6 +19,7 @@ import { showSuccessSheet, showConfirmSheet, dismissSheet } from "./ui/sheet.js"
 import { showHelpSheet } from "./ui/help.js";
 import { renderListenStep } from "./ui/listen-step.js";
 import { footerKey, speechChecksKey } from "./ui/scope.js";
+import { renderPreparation } from "./ui/preparation.js";
 
 // The journey is fajr.json's "order" resolved into step definitions.
 // A step that happens more than once (sujood four times, ruku twice, the whole second
@@ -37,8 +39,10 @@ let cleanup = null;
 let currentVideo = null; // demo video controller of the step on screen (see ui/video.js)
 
 // The camera setup screen is shown once per visit, before the first pose step.
-const FIRST_POSE = steps.findIndex((s) => s.type === "pose");
+// شاشة تجهيز الكاميرا تظهر مرة وحدة في الزيارة (الجوال ما تحرّك، فما نعيد السؤال).
 let setupSeen = false;
+// شاشة "قبل أن تصلي" تظهر **كل جولة**: الوضوء والنية يستحقون التأكيد من جديد.
+let prepSeen = false;
 // لما يضغط "تدرّب مرة ثانية" من شاشة النهاية: نرجع لها بعد ما يخلص الخطوة
 let returnToFinishAfter = null;
 
@@ -48,6 +52,7 @@ let returnToFinishAfter = null;
 let runStartedAt = new Date().toISOString();
 const startRun = () => {
   runStartedAt = new Date().toISOString();
+  prepSeen = false; // جولة جديدة: نعيد عرض شاشة "قبل أن تصلي"
 };
 const MAX_HINTS = 3;
 
@@ -60,7 +65,9 @@ function go(i) {
   cleanup = null;
   current = Math.max(0, Math.min(i, steps.length));
   window.scrollTo(0, 0);
-  if (current === FIRST_POSE && !setupSeen) showSetup(current, current > 0 ? () => go(current - 1) : null);
+  // قبل أول خطوة: تجهيز الكاميرا، ثم "قبل أن تصلي"
+  if (current === 0 && !setupSeen) showSetup(0, null);
+  else if (current === 0 && PREPARATION_SCREEN_ENABLED && !prepSeen) showPreparation();
   else if (current === steps.length) renderFinished();
   else renderStep(steps[current]);
 }
@@ -80,6 +87,23 @@ function showSetup(i, onBack) {
     },
     onBack,
   });
+}
+
+// شاشة "قبل أن تصلي": تذكير فقط، ما نسجّل الاختيارات ولا نرسلها.
+function showPreparation() {
+  cleanup?.();
+  cleanup = null;
+  current = 0;
+  window.scrollTo(0, 0);
+  app.innerHTML = `${header({ progress: false })}<section id="prep"></section>${footer()}`;
+  wireClose();
+  const dispose = renderPreparation(app.querySelector("#prep"), fajr.preparation ?? [], {
+    onReady: () => {
+      prepSeen = true;
+      go(0);
+    },
+  });
+  cleanup = dispose;
 }
 
 // ---------- layout ----------
