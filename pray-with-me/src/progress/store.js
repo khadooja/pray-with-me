@@ -39,3 +39,23 @@ export function resetProgress() {
     // ignore
   }
 }
+
+// هوية المختبر (مثل "T1")، لصفحة النتائج فقط. ما فيها أي بيانات شخصية أو اسم.
+const TESTER_KEY = "pwm-tester-id";
+
+export function getTesterId() {
+  try {
+    return localStorage.getItem(TESTER_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setTesterId(id) {
+  try {
+    if (id) localStorage.setItem(TESTER_KEY, id);
+    else localStorage.removeItem(TESTER_KEY);
+  } catch {
+    // ignore
+  }
+}

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نتائج اختبار المستخدمين | Pray With Me</title>
+    <link rel="stylesheet" href="/src/ui/style.css" />
+    <style>
+      .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+      input[type="text"] { min-height: 44px; font: inherit; padding: 8px 12px; border-radius: 10px; border: 2px solid var(--muted); background: transparent; color: var(--text); }
+      .rakah-cards { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+      .rakah-card { flex: 1; min-width: 220px; }
+      .rakah-card h3 { margin: 0 0 8px; font-size: 1rem; }
+      .rakah-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-top: 1px solid rgba(255,255,255,0.1); }
+      .rakah-row:first-of-type { border-top: none; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9rem; }
+      th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+      th { color: var(--muted); font-weight: 600; }
+      td.num, th.num { text-align: center; }
+      .ok { color: var(--accent); }
+      .bad { color: var(--warn); }
+      .muted { color: var(--muted); }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+      .actions .btn { width: auto; }
+    </style>
+  </head>
+  <body>
+    <main id="app">
+      <h1>نتائج اختبار المستخدمين</h1>
+      <p class="hint">
+        هذه الصفحة تقرأ محاولات هذا المتصفح فقط (نفس تخزين التطبيق المحلي)، وما تُرسل أي شيء
+        لأي مكان. التصدير الوحيد يصير لما تضغطين على زر التصدير، ويحمّل ملفاً على جهازك مباشرة.
+        الصفحة عربية فقط وداخلية، وما فيها رابط من التطبيق الرئيسي.
+      </p>
+
+      <div class="row">
+        <label>معرّف المختبر (Tester ID):
+          <input type="text" id="tester" placeholder="مثل T1" autocomplete="off" />
+        </label>
+        <span class="hint">بدون أسماء أو بيانات شخصية</span>
+      </div>
+
+      <h2>الركعة الأولى مقابل الثانية (الخطوات المفحوصة)</h2>
+      <div class="rakah-cards" id="rakah-cards"></div>
+
+      <h2>كل موضع في الرحلة</h2>
+      <table id="attempts-table">
+        <thead>
+          <tr>
+            <th>الموضع</th>
+            <th class="num">عدد المحاولات</th>
+            <th>أول محاولة</th>
+            <th>آخر محاولة</th>
+            <th class="num">معدل النجاح</th>
+          </tr>
+        </thead>
+        <tbody id="attempts-body"></tbody>
+      </table>
+
+      <div class="actions">
+        <button class="btn secondary" id="export-csv">تصدير CSV</button>
+        <button class="btn secondary" id="export-json">تصدير JSON</button>
+        <button class="btn secondary" id="reset">إعادة ضبط للمختبر التالي</button>
+      </div>
+    </main>
+
+    <script type="module">
+      import fajr from "/src/content/fajr.json";
+      import { resolveJourney, journeyAttemptKeys, journeyRakahs } from "/src/content/journey.js";
+      import { getAttempts, resetProgress, getTesterId, setTesterId } from "/src/progress/store.js";
+      import { summarizeAttempts, compareRakahs, attemptsToCSV, attemptsToJSON, CHECKED_STEPS }
+        from "/src/progress/results.js";
+      import { showConfirmSheet } from "/src/ui/sheet.js";
+
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) =>
+        String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+      const steps = resolveJourney(fajr);
+      const ATTEMPT_KEYS = journeyAttemptKeys(steps);
+      const RAKAHS = journeyRakahs(steps);
+
+      const STEP_LABELS = { standing: "القيام", ruku: "الركوع", sujood: "السجود" };
+      const pct = (r) => (r == null ? "—" : `${Math.round(r * 100)}%`);
+      const resultCell = (ok) => (ok == null ? '<span class="muted">—</span>'
+        : ok ? '<span class="ok">✓ نجح</span>' : '<span class="bad">✗ فشل</span>');
+
+      function render() {
+        $("tester").value = getTesterId();
+
+        const attempts = getAttempts();
+
+        // ---- بطاقات مقارنة الركعتين ----
+        const cmp = compareRakahs(attempts, steps, ATTEMPT_KEYS, RAKAHS);
+        $("rakah-cards").innerHTML = CHECKED_STEPS.map((id) => {
+          const rk = cmp[id] ?? {};
+          const rows = Object.keys(rk).sort().map((n) =>
+            `<div class="rakah-row"><span>الركعة ${esc(n)}</span>
+              <span>${rk[n].attempts} محاولة · ${pct(rk[n].successRate)}</span></div>`
+          ).join("") || '<p class="muted">لا محاولات بعد</p>';
+          return `<section class="card rakah-card"><h3>${esc(STEP_LABELS[id] ?? id)}</h3>${rows}</section>`;
+        }).join("");
+
+        // ---- جدول كل المواضع ----
+        const rows = summarizeAttempts(attempts, steps, ATTEMPT_KEYS);
+        $("attempts-body").innerHTML = rows.map((r) => `
+          <tr>
+            <td>${esc(r.key)}</td>
+            <td class="num">${r.attempts}</td>
+            <td>${resultCell(r.firstOk)}</td>
+            <td>${resultCell(r.lastOk)}</td>
+            <td class="num">${pct(r.successRate)}</td>
+          </tr>`).join("");
+      }
+
+      $("tester").onchange = () => setTesterId($("tester").value.trim());
+
+      // تنزيل ملف داخل المتصفح فقط: Blob محلي + رابط مؤقت، بدون أي طلب شبكة
+      function download(filename, content, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      const stamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      const testerSlug = () => (getTesterId() || "tester").replace(/[^\w-]+/g, "_");
+
+      $("export-csv").onclick = () => {
+        const csv = attemptsToCSV(getTesterId(), getAttempts(), ATTEMPT_KEYS);
+        download(`pray-with-me-${testerSlug()}-${stamp()}.csv`, csv, "text/csv;charset=utf-8");
+      };
+      $("export-json").onclick = () => {
+        const json = attemptsToJSON(getTesterId(), getAttempts());
+        download(`pray-with-me-${testerSlug()}-${stamp()}.json`, json, "application/json");
+      };
+
+      $("reset").onclick = () => {
+        showConfirmSheet({
+          title: "إعادة الضبط للمختبر التالي؟",
+          text: "هذا يمسح كل المحاولات المسجّلة في هذا المتصفح ومعرّف المختبر الحالي. صدّري البيانات أول إذا تحتاجينها.",
+          confirmLabel: "إعادة الضبط",
+          cancelLabel: "تراجع",
+          onConfirm: () => {
+            resetProgress();
+            setTesterId("");
+            render();
+          },
+        });
+      };
+
+      render();
+    </script>
+  </body>
+</html>

@@ -67,7 +67,20 @@ test("the current matcher raises many false alarms on a correct recitation", () 
   const r = run("word", "R1");
   assert.equal(byId.R1.recited, "full", "R1 is a complete recitation");
   assert.deepEqual(byId.R1.expectedMissing, [], "nothing was actually skipped");
-  assert.equal(r.missing.length, 8, "the shipped matcher reports 8 words that were in fact recited");
+  // similar() now requires exact equality (no more one-letter tolerance), so one more
+  // ASR split/merge artifact in R1 now counts as a false alarm: 8 -> 9.
+  assert.equal(r.missing.length, 9, "the shipped matcher reports 9 words that were in fact recited");
+});
+
+test("the word matcher's false-missing total across the fixture set is 31", () => {
+  // mirrors scripts/eval-speech.mjs's own SUMMARY calculation for the "word" matcher
+  let falseMissing = 0;
+  for (const c of fixtures.cases) {
+    const got = MATCHERS.word(c.transcript, REFERENCE).missing;
+    falseMissing += c.recited === "full" ? got.length : got.filter((w) => !c.expectedMissing.includes(w)).length;
+  }
+  assert.equal(falseMissing, 31,
+    "exact-match similar() turns more ASR split/merge artifacts into false alarms across all four fixtures");
 });
 
 test("both new matchers cut the false alarms to one", () => {
