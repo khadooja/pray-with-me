@@ -35,8 +35,8 @@
         "en": "While standing, recite Surat Al-Fatihah from beginning to end."
       },
       "reference": "الحمد لله رب العالمين الرحمن الرحيم مالك يوم الدين اياك نعبد واياك نستعين اهدنا الصراط المستقيم صراط الذين انعمت عليهم غير المغضوب عليهم ولا الضالين",
-      "transliteration": "TODO",
-      "meaning": "TODO",
+      "transliteration": "Bismi Allahi arrahmani arraheem. Alhamdu lillahi rabbi alAAalameen. Arrahmani arraheem. Maliki yawmi addeen. Iyyaka naAAbudu wa-iyyaka nastaAAeen. Ihdina assirata almustaqeem. Sirata allatheena anAAamta AAalayhim ghayri almaghdoobi AAalayhim wala addalleen.",
+      "meaning": "In The Name of Allah, The All-Merciful, The Ever-Merciful. Praise be to Allah, The Lord of the worlds. The All-Merciful, The Ever-Merciful. The Possessor of the Day of Doom. You only do we worship, and You only do we beseech for help. Guide us in the straight Path. The Path of the ones whom You have favored, other than that of the ones against whom You are angered, and not (that of) the erring.",
       "audio": "TODO",
       "source": "TODO"
     },
@@ -46,12 +46,12 @@
       "check": "ruku",
       "title": { "ar": "الركوع", "en": "Bowing (Ruku)" },
       "instruction": {
-        "en": "Bow down with your back straight and level with the floor, and your hands on your knees. Then say:"
+        "en": "support oneself with the hands on the knees when bowing, fingers spread apart, arms away from one’s sides, back straight, not raising one’s head nor lowering it. then say:"
       },
       "dhikr": {
         "arabic": "سبحان ربي العظيم",
-        "transliteration": "Subḥāna rabbiyal-ʿaẓīm",
-        "meaning": { "en": "Glory be to my Lord, the Most Great" },
+        "transliteration": "Subhana Rabbiyal- ‘Azeem",
+        "meaning": { "en": "Glory be to my Lord, the Ever-Magnificent" },
         "audio": ""
       },
       "source": "TODO"
@@ -62,11 +62,11 @@
       "check": "sujood",
       "title": { "ar": "السجود", "en": "Prostration (Sujood)" },
       "instruction": {
-        "en": "Prostrate with your forehead, nose, palms, knees and toes on the ground. Then say:"
+        "en": "prostrate using seven body parts: the forehead with the nose, both hands, both knees, and both feet. facing the Qiblah with his fingers and toes "
       },
       "dhikr": {
         "arabic": "سبحان ربي الأعلى",
-        "transliteration": "Subḥāna rabbiyal-aʿlā",
+        "transliteration": "Subhāna Rabbī al-A‘la",
         "meaning": { "en": "Glory be to my Lord, the Most High" },
         "audio": ""
       },
