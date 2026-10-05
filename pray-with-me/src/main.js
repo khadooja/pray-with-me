@@ -7,7 +7,7 @@ import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS, SPEECH_CHECK_ENABLED, 
 import { t, has } from "./i18n/index.js";
 import { recordAttempt, getAttempts } from "./progress/store.js";
 import { reviewSteps, occurrenceOf } from "./progress/review.js";
-import { resolveJourney, journeyAttemptKeys, journeyRakahs, rakahCount } from "./content/journey.js";
+import { resolveJourney, journeyAttemptKeys, journeyRakahs, rakahCount, journeyTransitions } from "./content/journey.js";
 import { evaluatePose, resetPoseMock } from "./pose/index.js";
 import { startCamera, stopCamera, runPoseLoop, shouldMirror } from "./pose/detector.js";
 import { preloadASR, startRecording, transcribe, compareRecitation } from "./speech/index.js";
@@ -18,6 +18,8 @@ import { figureCard, diagramCard, setupFigure } from "./figure/figure.js";
 import { showSuccessSheet, showConfirmSheet, dismissSheet } from "./ui/sheet.js";
 import { showHelpSheet } from "./ui/help.js";
 import { renderListenStep } from "./ui/listen-step.js";
+import { ready, levelBadge, instructionLine, transitionNote, sourceLinks, versesList, sunnahVersesCard }
+  from "./ui/step-content.js";
 import { footerKey, speechChecksKey } from "./ui/scope.js";
 import { renderPreparation } from "./ui/preparation.js";
 
@@ -30,6 +32,10 @@ const steps = resolveJourney(fajr);
 // رقم الركعة لكل خطوة، وعددها الكلي (نعرضها في الشريط العلوي)
 const RAKAHS = journeyRakahs(steps);
 const RAKAH_COUNT = rakahCount(steps);
+
+// ملاحظة تكبيرة الانتقال لكل موضع (أو null). مربوطة بالموضع لأن نفس الخطوة
+// ممكن يسبقها انتقال في موضع وما يسبقها في موضع ثانٍ.
+const TRANSITIONS = journeyTransitions(fajr);
 
 // مفتاح تسجيل المحاولات لكل موضع في الرحلة: sujood#1 و sujood#2 ...
 const ATTEMPT_KEYS = journeyAttemptKeys(steps);
@@ -155,8 +161,9 @@ function celebrate(key) {
   });
 }
 
+// سطر نسبة الصوت والنطق يجي تحت تنبيه النطاق، في كل الشاشات
 function footer() {
-  return `<footer class="footer">${esc(t(footerKey()))}</footer>`;
+  return `<footer class="footer">${esc(t(footerKey()))}<span class="footer-credit">${esc(t("footer_audio"))}</span></footer>`;
 }
 
 // hasVideo: the demo clip already has the voice, so the audio player stays hidden
@@ -165,10 +172,13 @@ function dhikrCard(d, hasVideo = false) {
   if (!d) return "";
   return `
     <section class="card dhikr">
+      <p class="dhikr-head">${levelBadge(d.level)}${
+        d.once ? `<span class="once">${esc(t("dhikr_once"))}</span>` : ""
+      }</p>
       <p class="arabic" dir="rtl" lang="ar">${esc(d.arabic)}</p>
-      <p class="translit">${esc(d.transliteration)}</p>
-      <p class="meaning">${esc(d.meaning?.en)}</p>
-      ${d.audio ? `<audio class="dhikr-audio" controls preload="none" src="${esc(d.audio)}"${hasVideo ? " hidden" : ""}></audio>` : ""}
+      ${ready(d.transliteration) ? `<p class="translit">${esc(d.transliteration)}</p>` : ""}
+      ${ready(d.meaning?.en) ? `<p class="meaning">${esc(d.meaning.en)}</p>` : ""}
+      ${ready(d.audio) ? `<audio class="dhikr-audio" controls preload="none" src="${esc(d.audio)}"${hasVideo ? " hidden" : ""}></audio>` : ""}
     </section>`;
 }
 
@@ -189,12 +199,15 @@ function renderStep(step) {
       <button type="button" class="link help-link" id="help">${esc(t("need_help"))}</button>
     </div>
     <h1>${esc(step.title.en)} <span class="ar" dir="rtl" lang="ar">${esc(step.title.ar)}</span></h1>
-    <p class="instruction">${esc(step.instruction.en)}</p>
+    ${levelBadge(step.level)}
+    ${transitionNote(TRANSITIONS[current])}
+    ${instructionLine(step)}
     ${step.type === "pose" ? `<p class="checks">${esc(t(`checks_${step.check}`))}</p>` : ""}
     ${step.type === "speech" ? `<p class="checks">${esc(t(speechChecksKey()))}</p>` : ""}
     ${mediaFor(step)}
     ${dhikrCard(step.dhikr, Boolean(step.video))}
     <section class="practice" id="practice"></section>
+    ${sourceLinks(step.sourceRefs, fajr.sources)}
     ${footer()}
     <div class="bottom-spacer"></div>
     <div class="bottom-bar">
@@ -447,8 +460,13 @@ function renderSpeech(step, root, attemptKey) {
   root.innerHTML = `
     <section class="card">
       <p class="label">${esc(t("recite_this"))}</p>
-      <p class="arabic reference" dir="rtl" lang="ar">${esc(step.reference)}</p>
+      ${
+        step.verses?.length
+          ? versesList(step.verses)
+          : `<p class="arabic reference" dir="rtl" lang="ar">${esc(step.reference)}</p>`
+      }
     </section>
+    ${sunnahVersesCard(step.sunnahVerses)}
     <p class="status" id="model"></p>
     <button class="btn" id="rec">${esc(t("start_reciting"))}</button>
     <p class="feedback" id="fb"></p>`;

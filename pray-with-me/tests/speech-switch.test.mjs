@@ -67,7 +67,10 @@ function sandbox(run) {
 test("the listen step renders without touching the microphone or the model", () => {
   sandbox((root) => {
     renderListenStep(FATIHA, root, () => {});
-    assert.ok(root.innerHTML.includes(FATIHA.reference), "the verses must be shown");
+    // the verses are rendered one by one now, so check the first and last of them
+    const html = root.innerHTML;
+    assert.ok(FATIHA.verses.length, "the fatiha step must carry its verses");
+    for (const v of FATIHA.verses) assert.ok(html.includes(v.arabic), `missing verse: ${v.arabic}`);
   });
 });
 
@@ -88,26 +91,36 @@ test("the listen step cannot record, judge, or ask for audio: it imports none of
   // only real import statements count; the file mentions these modules in comments
   // precisely to explain why it does NOT import them
   const imports = [...src.matchAll(/^\s*import\s[^;]*?from\s+["']([^"']+)["']/gm)].map((m) => m[1]);
-  assert.deepEqual(imports, ["../i18n/index.js"], `unexpected imports: ${imports.join(", ")}`);
+  // step-content.js is pure HTML building: no microphone, no model, no progress store
+  assert.deepEqual(imports, ["../i18n/index.js", "./step-content.js"],
+    `unexpected imports: ${imports.join(", ")}`);
+  const helper = read("../src/ui/step-content.js");
+  const helperImports = [...helper.matchAll(/^\s*import\s[^;]*?from\s+["']([^"']+)["']/gm)].map((m) => m[1]);
+  assert.deepEqual(helperImports, ["../i18n/index.js"], "the HTML builders must import nothing else");
   const code = src.split("\n").filter((line) => !line.trim().startsWith("//")).join("\n");
   assert.ok(!/recordAttempt|compareRecitation|transcribe|startRecording|getUserMedia/.test(code),
     "it must not record attempts or judge a recitation");
 });
 
 test("placeholder content never reaches the screen", () => {
-  // the content owner has not filled these in yet
-  assert.equal(FATIHA.transliteration, "TODO");
-  assert.equal(FATIHA.meaning, "TODO");
-  assert.equal(FATIHA.audio, "TODO");
+  // the content has arrived: the recording exists and the player points at it
+  assert.equal(FATIHA.audio, "/audio/fatiha.mp3");
   const html = listenStepHtml(FATIHA);
   assert.ok(!html.includes("TODO"), "the word TODO must never be shown to a user");
-  assert.ok(!html.includes("<audio"), "no audio player while the file is still a placeholder");
+  assert.ok(html.includes("<audio") && html.includes("/audio/fatiha.mp3"));
 
-  // ...and once the content is real, it does show
-  const filled = { ...FATIHA, transliteration: "Alhamdu lillah", meaning: "Praise be to Allah", audio: "/audio/fatiha.mp3" };
-  const full = listenStepHtml(filled);
-  assert.ok(full.includes("Alhamdu lillah") && full.includes("Praise be to Allah"));
-  assert.ok(full.includes("<audio") && full.includes("/audio/fatiha.mp3"));
+  // ...and a step whose content is still missing shows nothing instead of "TODO"
+  const empty = {
+    ...FATIHA,
+    audio: "TODO",
+    verses: FATIHA.verses.map((v) => ({ ...v, transliteration: "TODO", meaning: "TODO" })),
+    sunnahVerses: [],
+  };
+  const bare = listenStepHtml(empty);
+  assert.ok(!bare.includes("TODO"), "a TODO field must hide its own line");
+  assert.ok(!bare.includes("<audio"), "no audio player while the file is still a placeholder");
+  // the Arabic itself still shows, because that part is reviewed and present
+  for (const v of FATIHA.verses) assert.ok(bare.includes(v.arabic));
 });
 
 test("ready() treats TODO and blanks as not ready", () => {

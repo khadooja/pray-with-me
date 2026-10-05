@@ -6,9 +6,12 @@
 
 // يحوّل "order" إلى قائمة خطوات فعلية. الخطوة المكررة ترجع **نفس الكائن** في كل مرة.
 // إذا كان "order" ناقصاً (فرع محتوى قديم) نرجع لترتيب التعريفات نفسه.
+// مدخلة الترتيب إما نص (اسم الخطوة) أو كائن { id, transition } لما يكون قبلها انتقال.
+export const entryId = (e) => (typeof e === "string" ? e : e?.id);
+
 export function resolveJourney(fajr, warn = console.warn) {
   const byId = Object.fromEntries(fajr.steps.map((s) => [s.id, s]));
-  const ids = fajr.order ?? fajr.steps.map((s) => s.id);
+  const ids = (fajr.order ?? fajr.steps.map((s) => s.id)).map(entryId);
   return ids
     .map((id) => {
       const step = byId[id];
@@ -16,6 +19,13 @@ export function resolveJourney(fajr, warn = console.warn) {
       return step;
     })
     .filter(Boolean);
+}
+
+// ملاحظة الانتقال لكل موضع في الرحلة (أو null). مربوطة بالموضع مو بتعريف الخطوة،
+// لأن نفس الخطوة ممكن يسبقها انتقال في موضع وما يسبقها في موضع ثانٍ.
+export function journeyTransitions(fajr) {
+  const defs = fajr.transitions ?? {};
+  return (fajr.order ?? []).map((e) => (typeof e === "string" ? null : defs[e?.transition] ?? null));
 }
 
 // نفس الخطوة تتكرر في الرحلة (السجود ٤ مرات، والركوع مرتين...)، وتعريفها واحد.

@@ -370,7 +370,8 @@ export const POSE_FOR_STEP = {
   takbir: "takbir",
   standing: "standing",
   fatiha: "standing", // الفاتحة تُقرأ قائماً
-  takbir_transition: "standing", // تكبيرة الانتقال تُقال والمصلي قائم في الموضعين
+  takbir_to_ruku: "standing", // تكبيرة الانتقال من القيام للركوع
+  takbir_to_sujood: "standing", // تكبيرة الانتقال من القيام للسجود
   ruku: "ruku",
   rising: "standing", // الرفع من الركوع: يتحرك لأعلى من الركوع
   itidal: "standing",

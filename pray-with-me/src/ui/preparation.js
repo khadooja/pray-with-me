@@ -9,6 +9,17 @@ import { t } from "../i18n/index.js";
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+// الحقول الاختيارية (detail / link / source2) ممكن تكون غير موجودة أصلاً. نفس قاعدة
+// "TODO ما يُعرض" المستخدمة في بقية الواجهة. اسمها "given" مو "ready" عشان ما تتعارض
+// مع المتغيّر المحلي "ready" (كل العناصر معلّمة) داخل preparationHtml.
+const given = (v) => {
+  const s = String(v ?? "").trim();
+  return s !== "" && s !== "TODO";
+};
+
+// تسمية رابط كل عنصر (من en.json). فيه عنصر واحد فقط له رابط حالياً.
+const LINK_LABEL_KEY = { wudu: "prep_link_wudu" };
+
 // أيقونات خطية بسيطة، واحدة لكل عنصر. تقدرون تبدلونها بحرية.
 const ICONS = {
   time: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
@@ -37,8 +48,10 @@ export function preparationHtml(items, checked) {
     .join("");
 
   const cards = items
-    .map(
-      (i) => `
+    .map((i) => {
+      // الرابط خارج الزر دايماً: زر داخل زر/رابط غير صحيح في HTML، وهذا يضمن
+      // إن الضغط على الرابط ما يوصل أبداً لمعالج ضغط البطاقة (ما فيه تسلسل أصلاً).
+      const button = `
       <button type="button" class="prep-card${checked.has(i.id) ? " on" : ""}"
               data-id="${esc(i.id)}" aria-pressed="${checked.has(i.id)}">
         ${icon(i.id)}
@@ -48,16 +61,22 @@ export function preparationHtml(items, checked) {
             <span class="prep-ar" dir="rtl" lang="ar">${esc(i.title.ar)}</span>
           </span>
           <span class="prep-text">${esc(i.text)}</span>
+          ${given(i.detail) ? `<span class="prep-detail">${esc(i.detail)}</span>` : ""}
           ${i.id === "qibla" ? `<span class="prep-soon">${esc(t("prep_qibla_soon"))}</span>` : ""}
         </span>
         <span class="prep-check" aria-hidden="true"></span>
-      </button>`
-    )
+      </button>`;
+      const link = given(i.link) && LINK_LABEL_KEY[i.id]
+        ? `<a class="prep-link" href="${esc(i.link)}" target="_blank" rel="noopener noreferrer">${esc(t(LINK_LABEL_KEY[i.id]))}</a>`
+        : "";
+      return `<div class="prep-item">${button}${link}</div>`;
+    })
     .join("");
 
   const sources = items
+    .flatMap((i) => [[i.source, i.url], ...(given(i.url2) ? [[i.source2, i.url2]] : [])])
     .map(
-      (i) => `<li><a href="${esc(i.url)}" target="_blank" rel="noopener noreferrer">${esc(i.source)}</a></li>`
+      ([source, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(source)}</a></li>`
     )
     .join("");
 

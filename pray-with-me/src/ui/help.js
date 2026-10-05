@@ -1,6 +1,7 @@
 // لوح "تحتاج مساعدة؟": يفتح من أي خطوة ويعرض نفس محتواها (بدون أي نص مولّد).
 // كل النصوص من en.json، وكل المحتوى من fajr.json.
 import { t } from "../i18n/index.js";
+import { ready } from "./step-content.js";
 import { HELP_CONTACT_URL } from "../config.js";
 import { showActionSheet } from "./sheet.js";
 
@@ -27,14 +28,14 @@ export function helpActions(step, { url = HELP_CONTACT_URL, onReplay, onTryAgain
 export function helpBody(step) {
   const d = step.dhikr;
   return `
-    <p class="help-instruction">${esc(step.instruction?.en ?? "")}</p>
+    ${ready(step.instruction?.en) ? `<p class="help-instruction">${esc(step.instruction.en)}</p>` : ""}
     ${
       d
         ? `<section class="card dhikr help-dhikr">
             <p class="arabic" dir="rtl" lang="ar">${esc(d.arabic)}</p>
-            <p class="translit">${esc(d.transliteration)}</p>
-            <p class="meaning">${esc(d.meaning?.en)}</p>
-            ${d.audio ? `<audio class="dhikr-audio" controls preload="none" src="${esc(d.audio)}"></audio>` : ""}
+            ${ready(d.transliteration) ? `<p class="translit">${esc(d.transliteration)}</p>` : ""}
+            ${ready(d.meaning?.en) ? `<p class="meaning">${esc(d.meaning.en)}</p>` : ""}
+            ${ready(d.audio) ? `<audio class="dhikr-audio" controls preload="none" src="${esc(d.audio)}"></audio>` : ""}
           </section>`
         : ""
     }`;

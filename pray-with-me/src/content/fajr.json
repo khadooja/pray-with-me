@@ -11,7 +11,7 @@
       "text": "The time for Fajr has started.",
       "source": "الدرر السنية، الموسوعة الفقهية: اشتراط دخول الوقت",
       "url": "https://dorar.net/feqhia/831",
-      "reviewed": false
+      "reviewed": true
     },
     {
       "id": "wudu",
@@ -22,7 +22,8 @@
       "text": "You have made wudu (ablution).",
       "source": "الدرر السنية، الموسوعة الفقهية: الطهارة من الحدث",
       "url": "https://dorar.net/feqhia/1113",
-      "reviewed": false
+      "link": "https://youtu.be/2xS70Zn-jRk",
+      "reviewed": true
     },
     {
       "id": "purity",
@@ -33,7 +34,7 @@
       "text": "Your body, clothes and place are clean.",
       "source": "الدرر السنية، الموسوعة الفقهية: الطهارة من النجس",
       "url": "https://dorar.net/feqhia/826",
-      "reviewed": false
+      "reviewed": true
     },
     {
       "id": "cover",
@@ -42,9 +43,12 @@
         "en": "Covering"
       },
       "text": "Your body is covered as required.",
+      "detail": "Male (10+): cover from navel to knees. Female: cover the entire body except face and hands.",
       "source": "الدرر السنية، الموسوعة الفقهية: حد العورة في الصلاة",
       "url": "https://dorar.net/feqhia/874",
-      "reviewed": false
+      "source2": "IslamQA (English) — Conditions of the Validity of Prayer",
+      "url2": "https://islamqa.info/en/answers/107701",
+      "reviewed": true
     },
     {
       "id": "qibla",
@@ -55,7 +59,7 @@
       "text": "You are facing the direction of the Ka'bah.",
       "source": "الدرر السنية، الموسوعة الفقهية: استقبال القبلة",
       "url": "https://dorar.net/feqhia/857",
-      "reviewed": false
+      "reviewed": true
     },
     {
       "id": "intent",
@@ -66,33 +70,191 @@
       "text": "You intend in your heart to pray Fajr.",
       "source": "الدرر السنية، الموسوعة الفقهية: النية",
       "url": "https://dorar.net/feqhia/881",
-      "reviewed": false
+      "reviewed": true
     }
   ],
+  "sources": {
+    "1": {
+      "title": "الدرر السنية - الموسوعة الفقهية، كتاب الصلاة.",
+      "url": "https://dorar.net/en/feqhia"
+    },
+    "2": {
+      "title": "موسوعة المصطلحات والقواميس الإسلامية المترجمة - قسم الفقه وأصوله.",
+      "url": "https://terminologyenc.com/ar/browse/category/4"
+    },
+    "3": {
+      "title": "منصة رسالة الحرمين - The Prophet's Manner of Prayer (May Allah's peace and blessings be upon him) (English)",
+      "url": "https://risala.prh.gov.sa/en/content/106"
+    },
+    "4": {
+      "title": "الموسوعة القرآنية - ترجمة معاني سورة الفاتحة، ترجمة Dr. Ghali",
+      "url": "https://quranpedia.net/surah/1/1/book/13602"
+    },
+    "5": {
+      "title": "موقع الشيخ عبدالعزيز بن باز - صفة السلام من الصلاة",
+      "url": "https://binbaz.org.sa/fatwas/19967/%D8%B5%D9%81%D8%A9-%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85-%D9%85%D9%86-%D8%A7%D9%84%D8%B5%D9%84%D8%A7%D8%A9"
+    },
+    "6": {
+      "title": "موقع الشيخ عبدالعزيز بن باز - مقدار ما يجب في الركوع والسجود من الأذكار",
+      "url": "https://binbaz.org.sa/fatwas/10878/%D9%85%D9%82%D8%AF%D8%A7%D8%B1-%D9%85%D8%A7-%D9%8A%D8%AC%D8%A8-%D9%81%D9%8A-%D8%A7%D9%84%D8%B1%D9%83%D9%88%D8%B9-%D9%88%D8%A7%D9%84%D8%B3%D8%AC%D9%88%D8%AF-%D9%85%D9%86-%D8%A7%D9%84%D8%A7%D8%B0%D9%83%D8%A7%D8%B1"
+    },
+    "7": {
+      "title": "موقع الشيخ عبدالعزيز بن باز - هل يوجد فرق بين صلاة الرجل وصلاة المرأة",
+      "url": "https://binbaz.org.sa/fatwas/7905/%D9%87%D9%84-%D9%8A%D9%88%D8%AC%D8%AF-%D9%81%D8%B1%D9%82-%D8%A8%D9%8A%D9%86-%D8%B5%D9%84%D8%A7%D8%A9-%D8%A7%D9%84%D8%B1%D8%AC%D9%84-%D9%88%D8%B5%D9%84%D8%A7%D8%A9-%D8%A7%D9%84%D9%85%D8%B1%D8%A7%D8%A9"
+    },
+    "8": {
+      "title": "موقع الإسلام سؤال وجواب - إذا نسي سنة من سنن الصلاة هل يسجد للسهو",
+      "url": "https://islamqa.info/ar/answers/112077/%D8%A7%D8%B0%D8%A7-%D9%86%D8%B3%D9%8A-%D8%B3%D9%86%D8%A9-%D9%85%D9%86-%D8%B3%D9%86%D9%86-%D8%A7%D9%84%D8%B5%D9%84%D8%A7%D8%A9-%D9%87%D9%84-%D9%8A%D8%B3%D8%AC%D8%AF-%D9%84%D9%84%D8%B3%D9%87%D9%88"
+    },
+    "9": {
+      "title": "موقع الإسلام سؤال وجواب - ما هي أركان الصلاة وواجباتها وسننها؟",
+      "url": "https://islamqa.info/ar/answers/65847/%D9%85%D8%A7-%D9%87%D9%8A-%D8%A7%D8%B1%D9%83%D8%A7%D9%86-%D8%A7%D9%84%D8%B5%D9%84%D8%A7%D8%A9-%D9%88%D9%88%D8%A7%D8%AC%D8%A8%D8%A7%D8%AA%D9%87%D8%A7-%D9%88%D8%B3%D9%86%D9%86%D9%87%D8%A7#i-2"
+    },
+    "10": {
+      "title": "موقع الإسلام سؤال وجواب - Obligatory Parts and Sunnah Acts of Prayer",
+      "url": "https://islamqa.info/en/answers/65847/obligatory-parts-and-sunnah-acts-of-prayer#Pillars_of_prayer"
+    },
+    "11": {
+      "title": "Google translate - استُخدم للمساعدة في كتابة نطق جملة “السلام عليكم ورحمة الله” العربية بالأحرف اللاتينية وترجمة معناها. تمت مراجعة الترجمة من قائدة الفريق",
+      "url": "https://translate.google.com/?hl=ar&tab=TT&sl=ar&tl=en&op=translate"
+    },
+    "12": {
+      "title": "ElevenLabs – Text to Speech.",
+      "url": "https://elevenlabs.io/app/speech-synthesis/text-to-speech"
+    },
+    "13": {
+      "title": "ElevenLabs – Can I publish the content I generate on the platform",
+      "url": "https://help.elevenlabs.io/hc/en-us/articles/13313564601361-Can-I-publish-the-content-I-generate-on-the-platform?utm_source=chatgpt.com"
+    },
+    "14": {
+      "title": "المكتبة الصوتية للقرآن الكريم",
+      "url": "https://www.mp3quran.net/ar"
+    },
+    "15": {
+      "title": "موقع Quran.com",
+      "url": "https://quran.com/ar/al-fatihah/translation/transliteration?utm_source=chatgpt.com"
+    },
+    "16": {
+      "title": "Quran.Foundation - Quran Foundation Developer Terms of Service (“Terms”)",
+      "url": "https://api-docs.quran.com/legal/developer-terms/?utm_source=chatgpt.com"
+    },
+    "17": {
+      "title": "موقع الشيخ عبدالعزيز بن باز - حكم قول: (آمين) آخر الفاتحة",
+      "url": "https://binbaz.org.sa/fatwas/16837/%D8%AD%D9%83%D9%85-%D9%82%D9%88%D9%84-%D8%A7%D9%85%D9%8A%D9%86-%D8%A7%D8%AE%D8%B1-%D8%A7%D9%84%D9%81%D8%A7%D8%AA%D8%AD%D8%A9"
+    },
+    "18": {
+      "title": "موقع الشيخ عبدالعزيز بن باز - حكم البسملة عند قراءة الفاتحة",
+      "url": "https://binbaz.org.sa/fatwas/12086/%D8%AD%D9%83%D9%85-%D8%A7%D9%84%D8%A8%D8%B3%D9%85%D9%84%D8%A9-%D8%B9%D9%86%D8%AF-%D9%82%D8%B1%D8%A7%D8%A1%D8%A9-%D8%A7%D9%84%D9%81%D8%A7%D8%AA%D8%AD%D8%A9"
+    },
+    "19": {
+      "title": "موسوعة الجمهرة",
+      "url": "https://islamic-content.com/legacy-dictionary/word/1653/en"
+    },
+    "20": {
+      "title": "موقع الإسلام سؤال وجواب - مواضع رفع اليدين في الصلاة",
+      "url": "https://islamqa.info/ar/answers/3267/%D9%85%D9%88%D8%A7%D8%B6%D8%B9-%D8%B1%D9%81%D8%B9-%D8%A7%D9%84%D9%8A%D8%AF%D9%8A%D9%86-%D9%81%D9%8A-%D8%A7%D9%84%D8%B5%D9%84%D8%A7%D8%A9"
+    },
+    "21": {
+      "title": "موقع الشيخ محمد العثيمين - موضع تكبيرة الانتقال بين الأركان",
+      "url": "https://binothaimeen.net/ar/voice_library/lessonDetails/%D8%A7%D9%84%D8%A8%D8%AD%D8%AB/%D9%85%D9%88%D8%B6%D8%B9%20%D8%AA%D9%83%D8%A8%D9%8A%D8%B1%D8%A9%20%D8%A7%D9%84%D8%A7%D9%86%D8%AA%D9%82%D8%A7%D9%84%20%D8%A8%D9%8A%D9%86%20%D8%A7%D9%84%D8%A3%D8%B1%D9%83%D8%A7%D9%86/562c8f6e-6f1d-4bba-96e1-cd4be5469983"
+    }
+  },
+  "transitions": {
+    "to_jalsa": {
+      "dhikr": "الله أكبر",
+      "transliteration": "Allāhu Akbar",
+      "instruction": "Say “Allāhu Akbar” as you rise from Sujūd to the sitting position. Do not raise your hands.",
+      "raiseHands": false,
+      "ruling": "التكبير: واجب",
+      "from": "من السجود ← للجلوس",
+      "sourceRefs": [
+        9,
+        20,
+        21
+      ]
+    },
+    "to_sujood": {
+      "dhikr": "الله أكبر",
+      "transliteration": "Allāhu Akbar",
+      "instruction": "Say “Allāhu Akbar” as you go down into Sujūd . Do not raise your hands.",
+      "raiseHands": false,
+      "ruling": "التكبير: واجب",
+      "from": "من الجلوس ← للسجود",
+      "sourceRefs": [
+        9,
+        20,
+        21
+      ]
+    },
+    "to_standing": {
+      "dhikr": "الله أكبر",
+      "transliteration": "Allāhu Akbar",
+      "instruction": "Say “Allāhu Akbar” as you rise from Sujūd to stand for the second Rak‘ah. Do not raise your hands.",
+      "raiseHands": false,
+      "ruling": "التكبير: واجب",
+      "from": "من السجود ← للوقوف (الركعة الثانية)",
+      "sourceRefs": [
+        9,
+        20,
+        21
+      ]
+    },
+    "to_tashahhud": {
+      "dhikr": "الله أكبر",
+      "transliteration": "Allāhu Akbar",
+      "instruction": "Say “Allāhu Akbar” as you rise from Sujūd to the sitting position for Tashahhud. Do not raise your hand",
+      "raiseHands": false,
+      "ruling": "التكبير: واجب",
+      "from": "من السجود ← لجلسة التشهد",
+      "sourceRefs": [
+        9,
+        20,
+        21
+      ]
+    }
+  },
   "order": [
     "takbir",
     "standing",
     "fatiha",
-    "takbir_transition",
+    "takbir_to_ruku",
     "ruku",
     "rising",
     "itidal",
-    "takbir_transition",
+    "takbir_to_sujood",
     "sujood",
-    "jalsa",
-    "sujood",
-    "second_rakah",
+    {
+      "id": "jalsa",
+      "transition": "to_jalsa"
+    },
+    {
+      "id": "sujood",
+      "transition": "to_sujood"
+    },
+    {
+      "id": "second_rakah",
+      "transition": "to_standing"
+    },
     "standing",
     "fatiha",
-    "takbir_transition",
+    "takbir_to_ruku",
     "ruku",
     "rising",
     "itidal",
-    "takbir_transition",
+    "takbir_to_sujood",
     "sujood",
-    "jalsa",
-    "sujood",
-    "tashahhud",
+    {
+      "id": "jalsa",
+      "transition": "to_jalsa"
+    },
+    {
+      "id": "sujood",
+      "transition": "to_sujood"
+    },
+    {
+      "id": "tashahhud",
+      "transition": "to_tashahhud"
+    },
     "taslim"
   ],
   "steps": [
@@ -101,20 +263,27 @@
       "type": "guided",
       "title": {
         "ar": "تكبيرة الإحرام",
-        "en": "Opening Takbir"
+        "en": "takbirat al'iihram — The opening Allahu Akbar"
       },
+      "level": "rukn",
       "instruction": {
-        "en": "Stand facing the qibla. Raise both hands to the level of your ears or shoulders and say:"
+        "en": "raise the hands to the shoulders or the ears"
       },
+      "instructionLevel": "sunnah",
+      "source": "الاسم:[1] | التعليمات:[1] | النطق:[3] | المعنى:[3]",
+      "sourceRefs": [
+        1,
+        3
+      ],
       "dhikr": {
         "arabic": "الله أكبر",
         "transliteration": "Allāhu Akbar",
         "meaning": {
           "en": "Allah is the Greatest"
         },
-        "audio": ""
-      },
-      "source": "TODO"
+        "level": "rukn",
+        "audio": "/audio/takbir.mp3"
+      }
     },
     {
       "id": "standing",
@@ -122,40 +291,186 @@
       "check": "standing",
       "title": {
         "ar": "القيام",
-        "en": "Standing (Qiyam)"
+        "en": "Qiyām — standing"
       },
+      "level": "rukn",
       "instruction": {
-        "en": "Stand upright, facing forward. Place your right hand over your left hand on your chest."
+        "en": "standing and placing the hands on  the chest the right hand over the left"
       },
-      "source": "TODO"
+      "instructionLevel": "sunnah",
+      "source": "الاسم:[2] | التعليمات:[3]",
+      "sourceRefs": [
+        2,
+        3
+      ]
     },
     {
       "id": "fatiha",
       "type": "speech",
       "title": {
-        "ar": "قراءة الفاتحة",
-        "en": "Reciting Al-Fatihah"
+        "ar": "الفاتحة",
+        "en": "Al-Fatihah"
       },
+      "level": "rukn",
       "instruction": {
         "en": "While standing, recite Surat Al-Fatihah from beginning to end."
       },
       "reference": "الحمد لله رب العالمين الرحمن الرحيم مالك يوم الدين اياك نعبد واياك نستعين اهدنا الصراط المستقيم صراط الذين انعمت عليهم غير المغضوب عليهم ولا الضالين",
-      "transliteration": "TODO",
-      "meaning": "TODO",
-      "audio": "TODO",
-      "source": "TODO"
+      "verses": [
+        {
+          "arabic": "الحمد لله رب العالمين",
+          "transliteration": "Alhamdu lillahi rabbi alAAalameen",
+          "meaning": "Praise be to Allah, The Lord of the worlds."
+        },
+        {
+          "arabic": "الرحمن الرحيم",
+          "transliteration": "Arrahmani arraheem",
+          "meaning": "The All-Merciful, The Ever-Merciful."
+        },
+        {
+          "arabic": "مالك يوم الدين",
+          "transliteration": "Maliki yawmi addeen",
+          "meaning": "The Possessor of the Day of Doom."
+        },
+        {
+          "arabic": "إياك نعبد وإياك نستعين",
+          "transliteration": "Iyyaka naAAbudu wa-iyyaka nastaAAeen",
+          "meaning": "You only do we worship, and You only do we beseech for help."
+        },
+        {
+          "arabic": "اهدنا الصراط المستقيم",
+          "transliteration": "Ihdina assirata almustaqeem",
+          "meaning": "Guide us in the straight Path."
+        },
+        {
+          "arabic": "صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين",
+          "transliteration": "Sirata allatheena anAAamta AAalayhim ghayri almaghdoobi AAalayhim wala addalleen",
+          "meaning": "The Path of the ones whom You have favored, other than that of the ones against whom You are angered, and not (that of) the erring. (It is customary to say \"amin\" \"amen\" at the end of this Surah)."
+        }
+      ],
+      "sunnahVerses": [
+        {
+          "arabic": "بسم الله الرحمن الرحيم",
+          "transliteration": "Bismi Allahi arrahmani arraheem",
+          "meaning": "In The Name of Allah, The All-Merciful, The Ever-Merciful.",
+          "level": "sunnah",
+          "sourceRefs": [
+            18
+          ]
+        },
+        {
+          "arabic": "آمين",
+          "transliteration": "Amen",
+          "meaning": "My lord, answer my prayer.",
+          "level": "sunnah",
+          "sourceRefs": [
+            17,
+            19
+          ]
+        }
+      ],
+      "audio": "/audio/fatiha.mp3",
+      "source": "المعنى:[4] | النطق:[15] | الترخيص:[16] | الصوت:[14]",
+      "sourceRefs": [
+        4,
+        14,
+        15,
+        16,
+        19
+      ]
     },
     {
-      "id": "takbir_transition",
+      "id": "takbir_to_ruku",
       "type": "guided",
       "title": {
-        "ar": "تكبيرة الانتقال",
-        "en": "Transition Takbir"
+        "ar": "التكبير",
+        "en": "Takbīr"
       },
+      "level": "wajib",
       "instruction": {
-        "en": "TODO"
+        "en": "raise the hands to the shoulders      or the ears while saying: “Allāhu  Akbar”. Then bow into Rukū"
       },
-      "source": "TODO"
+      "instructionLevel": "sunnah",
+      "source": "الاسم:[2] | التعليمات:[1] | المعنى:[3]",
+      "sourceRefs": [
+        1,
+        2,
+        3,
+        9,
+        20,
+        21
+      ],
+      "raiseHands": true,
+      "ruling": "التكبير: واجب رفع اليدين: سنة",
+      "transitionFrom": "من الوقوف ← للركوع",
+      "dhikr": {
+        "arabic": "الله أكبر",
+        "transliteration": "Allahu Akbar",
+        "meaning": {
+          "en": "SEE “التكبير” TABLE BELOW"
+        },
+        "level": "wajib",
+        "audio": "TODO"
+      }
+    },
+    {
+      "id": "takbir_to_sujood",
+      "type": "guided",
+      "title": {
+        "ar": "التكبير",
+        "en": "Takbīr"
+      },
+      "level": "wajib",
+      "instruction": {
+        "en": "Say “Allāhu Akbar” as you go down into Sujūd. Do not raise your hands."
+      },
+      "source": "الاسم:[2] | التعليمات:[1] | المعنى:[3]",
+      "sourceRefs": [
+        1,
+        2,
+        3,
+        9,
+        20,
+        21
+      ],
+      "raiseHands": false,
+      "ruling": "التكبير: واجب",
+      "transitionFrom": "من الوقوف ← السجود",
+      "dhikr": {
+        "arabic": "الله أكبر",
+        "transliteration": "Allahu Akbar",
+        "meaning": {
+          "en": "SEE “التكبير” TABLE BELOW"
+        },
+        "level": "wajib",
+        "audio": "TODO"
+      }
+    },
+    {
+      "id": "rising",
+      "type": "guided",
+      "title": {
+        "ar": "الرفع من الركوع",
+        "en": "rising up after bowing"
+      },
+      "level": "rukn",
+      "instruction": {
+        "en": "raise the hands to the shoulders      or the ears while rising from  Rukū saying: “Sami‘allāhu li-man hamidah”"
+      },
+      "instructionLevel": "sunnah",
+      "source": "التعليمات:[3] | النطق:[3] | المعنى:[3]",
+      "sourceRefs": [
+        3
+      ],
+      "dhikr": {
+        "arabic": "سمع الله لمن حمده",
+        "transliteration": "Sami‘allāhu li-man hamidah",
+        "meaning": {
+          "en": "Allah hears he who praises Him"
+        },
+        "level": "wajib",
+        "audio": "/audio/rising.mp3"
+      }
     },
     {
       "id": "ruku",
@@ -163,44 +478,56 @@
       "check": "ruku",
       "title": {
         "ar": "الركوع",
-        "en": "Bowing (Ruku)"
+        "en": "Rukū — bowing"
       },
+      "level": "rukn",
       "instruction": {
-        "en": "Bow down with your back straight and level with the floor, and your hands on your knees. Then say:"
+        "en": "support oneself with the hands on the knees when bowing, fingers spread apart, arms away from one’s sides, back straight, not raising one’s head nor lowering it"
       },
+      "instructionLevel": "sunnah",
+      "source": "الاسم:[2] | التعليمات:[1] | النطق:[3] | المعنى:[3] | العدد: [6]",
+      "sourceRefs": [
+        1,
+        2,
+        3,
+        6
+      ],
       "dhikr": {
         "arabic": "سبحان ربي العظيم",
-        "transliteration": "Subḥāna rabbiyal-ʿaẓīm",
+        "transliteration": "Subhana Rabbiyal- ‘Azeem",
         "meaning": {
-          "en": "Glory be to my Lord, the Most Great"
+          "en": "Glory be to my Lord, the Ever-Magnificent"
         },
-        "audio": ""
-      },
-      "source": "TODO"
-    },
-    {
-      "id": "rising",
-      "type": "guided",
-      "title": {
-        "ar": "الرفع من الركوع",
-        "en": "Rising from Ruku"
-      },
-      "instruction": {
-        "en": "TODO"
-      },
-      "source": "TODO"
+        "level": "wajib",
+        "once": true,
+        "audio": "/audio/ruku.mp3"
+      }
     },
     {
       "id": "itidal",
       "type": "guided",
       "title": {
-        "ar": "الاعتدال",
-        "en": "Standing Upright (I'tidal)"
+        "ar": "الاعتدال قائما",
+        "en": "Standing up straight"
       },
+      "level": "rukn",
       "instruction": {
-        "en": "TODO"
+        "en": "once standing upright, say:"
       },
-      "source": "TODO"
+      "source": "الاسم:[10] | التعليمات:[3] | المعنى:[3]",
+      "sourceRefs": [
+        3,
+        10
+      ],
+      "dhikr": {
+        "arabic": "ربنا لك الحمد",
+        "transliteration": "Rabbana lakal-hamd",
+        "meaning": {
+          "en": "Our Lord, to You belongs all praise"
+        },
+        "level": "wajib",
+        "audio": "/audio/itidal.mp3"
+      }
     },
     {
       "id": "sujood",
@@ -208,32 +535,115 @@
       "check": "sujood",
       "title": {
         "ar": "السجود",
-        "en": "Prostration (Sujood)"
+        "en": "Sujūd — prostration"
       },
+      "level": "rukn",
       "instruction": {
-        "en": "Prostrate with your forehead, nose, palms, knees and toes on the ground. Then say:"
+        "en": "prostrate using seven body parts: the forehead with the nose, both hands, both knees, and both feet. facing the Qiblah with his fingers and toes"
       },
+      "source": "الاسم:[2] | التعليمات:[1] | النطق:[3] | المعنى:[3] | العدد: [6]",
+      "sourceRefs": [
+        1,
+        2,
+        3,
+        6
+      ],
       "dhikr": {
         "arabic": "سبحان ربي الأعلى",
-        "transliteration": "Subḥāna rabbiyal-aʿlā",
+        "transliteration": "Subhāna Rabbī al-A‘la",
         "meaning": {
           "en": "Glory be to my Lord, the Most High"
         },
-        "audio": ""
-      },
-      "source": "TODO"
+        "level": "wajib",
+        "once": true,
+        "audio": "/audio/sujood.mp3"
+      }
     },
     {
       "id": "jalsa",
       "type": "guided",
       "title": {
-        "ar": "الجلسة بين السجدتين",
-        "en": "Sitting Between the Two Prostrations"
+        "ar": "جلوس بين السجدتين",
+        "en": "Juloos — sitting between the two prostrations"
       },
+      "level": "rukn",
       "instruction": {
-        "en": "TODO"
+        "en": "Sit on your left foot, keep your right foot upright, and point the toes of your right foot toward the Qiblah."
       },
-      "source": "TODO"
+      "instructionLevel": "sunnah",
+      "source": "الاسم:[2] | التعليمات:[2] | النطق:[3] | المعنى:[3] | العدد: [6]",
+      "sourceRefs": [
+        2,
+        3,
+        6
+      ],
+      "dhikr": {
+        "arabic": "ربي اغفر لي",
+        "transliteration": "Rabbighfir li",
+        "meaning": {
+          "en": "O Lord, forgive me"
+        },
+        "level": "wajib",
+        "once": true,
+        "audio": "/audio/jalsa.mp3"
+      }
+    },
+    {
+      "id": "tashahhud",
+      "type": "guided",
+      "title": {
+        "ar": "التشهد الأخير",
+        "en": "Tashahhud — Reciting the tashahhud"
+      },
+      "level": "rukn",
+      "instruction": {
+        "en": "Sit on your left foot, keep your right foot upright, and point the toes of your right foot toward the Qiblah. and say:"
+      },
+      "instructionLevel": "sunnah",
+      "source": "الاسم:[1] | التعليمات:[2] | النطق:[3] | المعنى:[3]",
+      "sourceRefs": [
+        1,
+        2,
+        3
+      ],
+      "dhikr": {
+        "arabic": "التحيات لله والصلوات والطيبات، السلام عليك أيها النبي ورحمة الله وبركاته، السلام علينا وعلى عباد الله الصالحين، أشهد أن لا إله إلا الله وأشهد أن محمدًا عبده ورسوله، اللهم صل على محمد وعلى آل محمد كما صليت على إبراهيم وعلى آل إبراهيم إنك حميد مجيد.",
+        "transliteration": "At-tahiyyātu lillāhi was-salawātu wattayyibātu, as-salāmu ‘alayka ayyuha an-nabyyu wa rahmatullāhi wa barakātuh as-salāmu ‘alayna wa ‘ala ‘ibādillāh as-sālihīn; ashhadu an la ilāha illa Allah, wa ashhadu anna Muhammadan ‘abduhu wa rasūluh, Allāhumma salli ‘ala Muhammadin wa ‘ala āli Muhammad kama sallayta ‘ala Ibrāhīma wa ‘alā āli Ibrāhīm, innaka Hamīdun Majīd",
+        "meaning": {
+          "en": "All greetings, prayers, and good things are due to Allah. May the peace, blessings, and mercy of Allah be upon you, O Prophet. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no god but Allah, and I bear witness that Muhammad is His servant and His Messenger,O Allah, bestow Your peace upon Muhammad and the family of Muhammad as You have bestowed Your peace upon Abraham and the family of Abraham; indeed, You are Praiseworthy and Glorious"
+        },
+        "level": "rukn",
+        "audio": "/audio/tashahhud.mp3"
+      }
+    },
+    {
+      "id": "taslim",
+      "type": "guided",
+      "title": {
+        "ar": "التسليم",
+        "en": "Taslīm — offering Salaam"
+      },
+      "level": "rukn",
+      "instruction": {
+        "en": "Turn your head to the right while offering Salaam then immediately turn your head to the left while repeating it"
+      },
+      "instructionLevel": "sunnah",
+      "source": "الاسم:[3] | التعليمات:[1] | النطق:[11] | المعنى:[11] | الذكر: [5]",
+      "sourceRefs": [
+        1,
+        3,
+        5,
+        11
+      ],
+      "dhikr": {
+        "arabic": "السلام عليكم ورحمة الله",
+        "transliteration": "As-salamu alaikum Warahmatullah",
+        "meaning": {
+          "en": "Peace be upon you and the mercy of Allah"
+        },
+        "level": "rukn",
+        "audio": "/audio/taslim.mp3"
+      }
     },
     {
       "id": "second_rakah",
@@ -245,31 +655,8 @@
       "instruction": {
         "en": "Rise to stand for the second rakah."
       },
-      "source": "TODO"
-    },
-    {
-      "id": "tashahhud",
-      "type": "guided",
-      "title": {
-        "ar": "التشهد",
-        "en": "Tashahhud"
-      },
-      "instruction": {
-        "en": "TODO"
-      },
-      "source": "TODO"
-    },
-    {
-      "id": "taslim",
-      "type": "guided",
-      "title": {
-        "ar": "التسليم",
-        "en": "Taslim"
-      },
-      "instruction": {
-        "en": "TODO"
-      },
-      "source": "TODO"
+      "source": "TODO",
+      "level": null
     }
   ]
 }

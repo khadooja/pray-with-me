@@ -14,7 +14,9 @@ There is no backend, no API keys and no database. The only network traffic is
 downloading the app itself and the AI models and runtimes: the MediaPipe pose model from
 Google storage (`storage.googleapis.com`), the Whisper model from Hugging Face
 (`huggingface.co`), and the MediaPipe and onnxruntime WebAssembly files from `cdn.jsdelivr.net`. Progress (which steps you completed)
-is stored only in your browser's `localStorage`.
+is stored only in your browser's `localStorage`. The "Before you pray" screen's wudu item
+links to a YouTube video; the app loads nothing from YouTube — that link only opens, in a
+new tab, if you tap it.
 
 ## What it does, and what it does NOT do
 
@@ -114,7 +116,9 @@ downloaded from Hugging Face at runtime and must **never** be committed.
 ## Project layout
 
 ```
-src/content/fajr.json      steps and religious content (content teammate)
+src/content/fajr.json      steps and religious content — GENERATED, do not hand-edit
+docs/content-source.md     the content owner's final table: the one place to edit content
+scripts/build-content.mjs  rewrites fajr.json and SOURCES.md from that table
 src/pose/                  camera, pose model, posture rules (AI teammate)
 src/speech/                recording, Whisper worker, alignment (AI teammate)
 src/i18n/en.json, ui/      all user-facing text and styling (UX teammate)

@@ -1,8 +1,8 @@
 // Run: node tests/preparation.test.mjs   (or npm test)
 //
-// The "Before you pray" screen. The content is a DRAFT the content owner is reviewing,
-// so these tests pin the supplied wording character-for-character: an accidental edit
-// fails here rather than reaching a user.
+// The "Before you pray" screen. The content owner has approved all six items, so these
+// tests pin the supplied wording character-for-character: an accidental edit fails here
+// rather than reaching a user.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PREPARATION_SCREEN_ENABLED } from "../src/config.js";
@@ -26,43 +26,51 @@ function test(name, fn) {
   }
 }
 
-// ---------- the content is exactly what was supplied, and still unreviewed ----------
+// ---------- the content is exactly what was supplied, and now approved ----------
 const EXPECTED = [
-  ["time", "دخول الوقت", "Prayer time", "The time for Fajr has started.",
-    "الدرر السنية، الموسوعة الفقهية: اشتراط دخول الوقت", "https://dorar.net/feqhia/831"],
-  ["wudu", "الوضوء", "Wudu", "You have made wudu (ablution).",
-    "الدرر السنية، الموسوعة الفقهية: الطهارة من الحدث", "https://dorar.net/feqhia/1113"],
-  ["purity", "الطهارة", "Purity", "Your body, clothes and place are clean.",
-    "الدرر السنية، الموسوعة الفقهية: الطهارة من النجس", "https://dorar.net/feqhia/826"],
-  ["cover", "ستر العورة", "Covering", "Your body is covered as required.",
-    "الدرر السنية، الموسوعة الفقهية: حد العورة في الصلاة", "https://dorar.net/feqhia/874"],
-  ["qibla", "استقبال القبلة", "Facing the Qibla", "You are facing the direction of the Ka'bah.",
-    "الدرر السنية، الموسوعة الفقهية: استقبال القبلة", "https://dorar.net/feqhia/857"],
-  ["intent", "النية", "Intention", "You intend in your heart to pray Fajr.",
-    "الدرر السنية، الموسوعة الفقهية: النية", "https://dorar.net/feqhia/881"],
+  { id: "time", ar: "دخول الوقت", en: "Prayer time", text: "The time for Fajr has started.",
+    source: "الدرر السنية، الموسوعة الفقهية: اشتراط دخول الوقت", url: "https://dorar.net/feqhia/831" },
+  { id: "wudu", ar: "الوضوء", en: "Wudu", text: "You have made wudu (ablution).",
+    source: "الدرر السنية، الموسوعة الفقهية: الطهارة من الحدث", url: "https://dorar.net/feqhia/1113",
+    link: "https://youtu.be/2xS70Zn-jRk" },
+  { id: "purity", ar: "الطهارة", en: "Purity", text: "Your body, clothes and place are clean.",
+    source: "الدرر السنية، الموسوعة الفقهية: الطهارة من النجس", url: "https://dorar.net/feqhia/826" },
+  { id: "cover", ar: "ستر العورة", en: "Covering", text: "Your body is covered as required.",
+    detail: "Male (10+): cover from navel to knees. Female: cover the entire body except face and hands.",
+    source: "الدرر السنية، الموسوعة الفقهية: حد العورة في الصلاة", url: "https://dorar.net/feqhia/874",
+    source2: "IslamQA (English) — Conditions of the Validity of Prayer",
+    url2: "https://islamqa.info/en/answers/107701" },
+  { id: "qibla", ar: "استقبال القبلة", en: "Facing the Qibla", text: "You are facing the direction of the Ka'bah.",
+    source: "الدرر السنية، الموسوعة الفقهية: استقبال القبلة", url: "https://dorar.net/feqhia/857" },
+  { id: "intent", ar: "النية", en: "Intention", text: "You intend in your heart to pray Fajr.",
+    source: "الدرر السنية، الموسوعة الفقهية: النية", url: "https://dorar.net/feqhia/881" },
 ];
 
 test("the six items match the supplied text exactly", () => {
   assert.equal(ITEMS.length, 6, "six things to get ready");
-  EXPECTED.forEach(([id, ar, enTitle, text, source, url], i) => {
+  EXPECTED.forEach((exp, i) => {
     const it = ITEMS[i];
-    assert.equal(it.id, id, `item ${i}: id`);
-    assert.equal(it.title.ar, ar, `${id}: Arabic title must not be edited`);
-    assert.equal(it.title.en, enTitle, `${id}: English title`);
-    assert.equal(it.text, text, `${id}: text must not be reworded`);
-    assert.equal(it.source, source, `${id}: source must not be edited`);
-    assert.equal(it.url, url, `${id}: url`);
+    assert.equal(it.id, exp.id, `item ${i}: id`);
+    assert.equal(it.title.ar, exp.ar, `${exp.id}: Arabic title must not be edited`);
+    assert.equal(it.title.en, exp.en, `${exp.id}: English title`);
+    assert.equal(it.text, exp.text, `${exp.id}: text must not be reworded`);
+    assert.equal(it.source, exp.source, `${exp.id}: source must not be edited`);
+    assert.equal(it.url, exp.url, `${exp.id}: url`);
+    assert.equal(it.detail, exp.detail, `${exp.id}: detail line`);
+    assert.equal(it.source2, exp.source2, `${exp.id}: second source`);
+    assert.equal(it.url2, exp.url2, `${exp.id}: second url`);
+    assert.equal(it.link, exp.link, `${exp.id}: link`);
   });
 });
 
-test("every item is still marked unreviewed", () => {
+test("every item is marked reviewed by the content owner", () => {
   for (const it of ITEMS) {
-    assert.equal(it.reviewed, false, `${it.id}: reviewed must stay false until the content owner approves`);
+    assert.equal(it.reviewed, true, `${it.id}: the content owner approved all six`);
   }
 });
 
 test("the prayer steps were not disturbed by adding the preparation content", () => {
-  assert.equal(fajr.steps.length, 12);
+  assert.equal(fajr.steps.length, 13, "the transition takbir is two definitions now");
   assert.equal(fajr.order.length, 24);
 });
 
@@ -71,7 +79,8 @@ test("the screen is enabled, with draft content", () => {
   assert.equal(PREPARATION_SCREEN_ENABLED, true);
   const config = read("../src/config.js");
   assert.ok(/PREPARATION_SCREEN_ENABLED = (true|false);/.test(config), "it must stay a plain boolean");
-  assert.ok(config.includes("مسودّة"), "the Arabic comment must still say the content is a draft");
+  assert.ok(config.includes("اعتمدت"), "the Arabic comment must say the content owner approved the content");
+  assert.ok(config.includes("reviewed\": true"), "the comment must reflect the actual reviewed flag");
 });
 
 // ---------- rendering ----------
@@ -127,16 +136,45 @@ test("the progress count and segments follow the ticks", () => {
   assert.equal((html(new Set(["time", "wudu"])).match(/prep-seg on/g) || []).length, 2);
 });
 
-test("sources render as links that open in a new tab", () => {
+test("sources render as links that open in a new tab, including cover's second source", () => {
   const out = html();
   for (const it of ITEMS) {
     assert.ok(out.includes(`href="${it.url}"`), `${it.id}: source link missing`);
     assert.ok(out.includes(esc(it.source)), `${it.id}: source text missing`);
   }
-  assert.equal((out.match(/target="_blank"/g) || []).length, 6);
-  assert.equal((out.match(/rel="noopener noreferrer"/g) || []).length, 6);
+  assert.ok(out.includes(`href="${ITEMS.find((i) => i.id === "cover").url2}"`), "cover's second source is missing");
+  assert.ok(out.includes(esc(ITEMS.find((i) => i.id === "cover").source2)));
+  // one <li> per item, plus one for cover's extra source — independent of the wudu how-to
+  // link, which lives outside #prep-sources entirely and is checked separately
+  const list = out.slice(out.indexOf('id="prep-sources"'));
+  assert.equal((list.match(/target="_blank"/g) || []).length, 7);
+  assert.equal((list.match(/rel="noopener noreferrer"/g) || []).length, 7);
   assert.ok(out.includes('id="prep-sources" hidden'), "the list starts collapsed");
   assert.ok(out.includes('aria-expanded="false"'), "the toggle reports its state");
+});
+
+test("the cover card shows its detail line, and no other card does", () => {
+  const out = html();
+  const cover = ITEMS.find((i) => i.id === "cover");
+  assert.equal((out.match(/class="prep-detail"/g) || []).length, 1, "only one detail line on screen");
+  assert.ok(out.includes(`<span class="prep-detail">${esc(cover.detail)}</span>`));
+});
+
+test("the wudu link renders outside the card, with the exact URL and its own label", () => {
+  const out = html();
+  const wudu = ITEMS.find((i) => i.id === "wudu");
+  assert.equal((out.match(/class="prep-link"/g) || []).length, 1, "exactly one link on the whole screen");
+  assert.ok(!wudu.link.includes("?si="), "the source url itself must have no tracking parameter");
+  assert.ok(out.includes(`<a class="prep-link" href="${wudu.link}" target="_blank" rel="noopener noreferrer">`),
+    "the link must point at the exact url, open in a new tab, and not leak a referrer");
+  assert.ok(out.includes(esc(en.prep_link_wudu)), "the label must come from en.json");
+
+  // structural proof it cannot toggle the card: it is not inside that card's own <button>…</button>
+  const cardStart = out.indexOf('data-id="wudu"');
+  const cardMarkup = out.slice(cardStart, out.indexOf("</button>", cardStart) + "</button>".length);
+  assert.ok(!cardMarkup.includes("prep-link"), "the link must not be nested inside the button");
+  const afterCard = out.slice(out.indexOf("</button>", cardStart));
+  assert.ok(afterCard.slice(0, 200).includes("prep-link"), "the link must follow, as a sibling of the button");
 });
 
 // ---------- interaction, with a tiny fake DOM ----------

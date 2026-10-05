@@ -321,6 +321,9 @@ audio { width: 100%; margin-top: 8px; }
 .prep-count { flex: none; color: var(--muted); font-size: 0.82rem; font-weight: 700; }
 
 .prep-cards { display: flex; flex-direction: column; gap: 10px; }
+/* كل عنصر = الزر (البطاقة) + رابط خارجي اختياري تحته. الرابط مو داخل الزر أبداً
+   (زر فيه رابط غير صحيح في HTML)، فهذا الـ wrapper يربطهم بصرياً بس. */
+.prep-item { display: flex; flex-direction: column; gap: 6px; }
 .prep-card {
   display: flex;
   align-items: flex-start;
@@ -342,6 +345,7 @@ audio { width: 100%; margin-top: 8px; }
 .prep-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .prep-ar { font-family: var(--font-ar); color: var(--accent); font-size: 0.95rem; }
 .prep-text { color: var(--muted); font-size: 0.9rem; }
+.prep-detail { color: var(--muted); font-size: 0.8rem; }
 .prep-soon {
   align-self: flex-start;
   margin-top: 4px;
@@ -364,6 +368,16 @@ audio { width: 100%; margin-top: 8px; }
   background: var(--accent);
   box-shadow: inset 0 0 0 3px var(--card);
 }
+
+/* رابط خارجي تحت البطاقة (مثل "How to perform wudu")، يصطف تحت عمود النص */
+.prep-link {
+  align-self: flex-start;
+  margin-left: 52px; /* عرض الأيقونة (26px) + المسافة (12px) + حشو البطاقة (14px) */
+  color: var(--accent);
+  font-size: 0.85rem;
+  text-decoration: underline;
+}
+.prep-link:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 
 .prep-note {
   display: flex;
@@ -480,5 +494,75 @@ audio { width: 100%; margin-top: 8px; }
   color: var(--muted);
   font-size: 0.8rem;
 }
+
+/* ---------- تصنيف الحكم: ركن / واجب / سنة ---------- */
+/* الشارة تعرض الحكم كما جاء في ملف المحتوى، بدون أي اجتهاد من الكود */
+.level {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.level-rukn { color: var(--accent); }
+.level-wajib { color: var(--warn); }
+.level-sunnah { color: var(--muted); }
+.level.inline { text-transform: none; letter-spacing: 0; vertical-align: 2px; }
+h1 + .level { margin: 0 0 12px; }
+
+.once {
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.dhikr-head { margin: 0 0 8px; }
+.dhikr-head:empty { display: none; }
+
+/* ---------- ملاحظة تكبيرة الانتقال ---------- */
+/* تظهر في أول الخطوة اللي بعد الانتقال، لأن التكبير يُقال وأنت تنتقل */
+.transition-note {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: rgba(255, 255, 255, 0.05);
+}
+.transition-note p { margin: 0 0 4px; }
+.transition-note p:last-child { margin-bottom: 0; }
+.transition-head { color: var(--muted); font-size: 0.85rem; }
+.transition-note .arabic { font-size: 1.25rem; }
+.transition-instruction { color: var(--muted); font-size: 0.85rem; }
+
+/* ---------- آيات الفاتحة، كل آية بسطرها ---------- */
+.verses {
+  margin: 0;
+  padding-left: 1.6em;
+}
+.verses .verse { margin-bottom: 14px; }
+.verses .verse:last-child { margin-bottom: 0; }
+.verse p { margin: 0 0 4px; }
+.verse .arabic { font-size: 1.3rem; line-height: 1.9; }
+.ayn-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* بطاقة السنة: البسملة والتأمين. منفصلة عشان يتضح إنها ما تدخل في الفحص */
+.sunnah-card { border: 1px dashed rgba(255, 255, 255, 0.25); }
+.sunnah-card .verse { margin-bottom: 12px; }
+.sunnah-card .verse:last-child { margin-bottom: 0; }
+.sunnah-head { margin: 0 0 10px; }
+
+/* ---------- روابط المصادر ---------- */
+.sources { margin: 16px 0 0; font-size: 0.8rem; color: var(--muted); }
+.sources-label { margin-right: 4px; }
+.source-ref { color: var(--muted); text-decoration: none; }
+.source-ref:hover, .source-ref:focus-visible { color: var(--accent); text-decoration: underline; }
+
+.footer-credit { display: block; margin-top: 8px; }
 
 [hidden] { display: none !important; }

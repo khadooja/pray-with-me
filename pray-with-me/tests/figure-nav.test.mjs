@@ -318,7 +318,9 @@ const fajr = JSON.parse(
   (await import("node:fs")).readFileSync(new URL("../src/content/fajr.json", import.meta.url), "utf8")
 );
 const byId = Object.fromEntries(fajr.steps.map((s) => [s.id, s]));
-const JOURNEY = fajr.order.map((id) => byId[id]);
+// an "order" entry is either a step id or { id, transition }
+const ORDER = fajr.order.map((e) => (typeof e === "string" ? e : e.id));
+const JOURNEY = ORDER.map((id) => byId[id]);
 
 test("the whole 14-step journey runs forward with no errors", () => {
   reset();
@@ -370,7 +372,7 @@ test("stepping back and forth across every boundary of the journey is clean", ()
 test("all four sujood occurrences are the same definition and each behaves", () => {
   reset();
   rafTimeOffset = 8;
-  const positions = fajr.order.map((id, i) => (id === "sujood" ? i : -1)).filter((i) => i >= 0);
+  const positions = ORDER.map((id, i) => (id === "sujood" ? i : -1)).filter((i) => i >= 0);
   assert.equal(positions.length, 4, "sujood happens four times across the two rakahs");
   for (const i of positions) {
     assert.equal(JOURNEY[i], JOURNEY[positions[0]], "every occurrence must be the one object");
@@ -503,7 +505,7 @@ test("Practice again jumps to the step and Next returns to the finish screen", (
   r.go(JOURNEY.length); // the finish screen
   for (let i = 0; i < 10; i++) tick(30);
 
-  const target = fajr.order.indexOf("ruku");
+  const target = ORDER.indexOf("ruku");
   r.practiceAgain(target);
   for (let i = 0; i < 40; i++) tick(30);
   assert.equal(r.at(), target, "it should jump to the chosen step");
@@ -522,7 +524,7 @@ test("Back during a practice-again cancels the return instead of trapping the us
   reset();
   rafTimeOffset = 8;
   const r = makeRouter();
-  const target = fajr.order.indexOf("sujood");
+  const target = ORDER.indexOf("sujood");
   r.practiceAgain(target);
   for (let i = 0; i < 30; i++) tick(30);
   r.back();

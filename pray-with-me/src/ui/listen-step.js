@@ -6,27 +6,31 @@
 // (../progress/store.js) **عن قصد**: فما عنده أي طريقة يطلب بها المايك أو ينزّل نموذجاً
 // أو يسجّل محاولة. الاختبار يتأكد من هذا.
 import { t } from "../i18n/index.js";
+import { versesList, sunnahVersesCard, ready } from "./step-content.js";
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-// الحقول في fajr.json لسه فيها "TODO" (المحتوى ما خلص).
 // ما نعرض كلمة TODO للمستخدم أبداً: إذا القيمة ناقصة نخفي السطر كله.
-export function ready(value) {
-  const v = String(value ?? "").trim();
-  return v !== "" && v !== "TODO";
-}
+// التعريف في step-content.js، ونعيد تصديره من هنا عشان الاختبارات القديمة.
+export { ready };
 
 // محتوى منطقة التدريب. دالة صافية ترجع HTML، عشان نقدر نختبرها.
 export function listenStepHtml(step) {
   return `
     <section class="card">
       <p class="label">${esc(t("recite_this"))}</p>
-      <p class="arabic reference" dir="rtl" lang="ar">${esc(step.reference)}</p>
-      ${ready(step.transliteration) ? `<p class="translit">${esc(step.transliteration)}</p>` : ""}
-      ${ready(step.meaning) ? `<p class="meaning">${esc(step.meaning)}</p>` : ""}
+      ${
+        // الآيات كل آية بسطرها (عربي + نطق + معنى). إذا المحتوى لسه ما وصل،
+        // نرجع للنص المرجعي كامل بدون تفصيل.
+        step.verses?.length
+          ? versesList(step.verses)
+          : `<p class="arabic reference" dir="rtl" lang="ar">${esc(step.reference)}</p>`
+      }
       ${ready(step.audio) ? `<audio class="dhikr-audio" controls preload="none" src="${esc(step.audio)}"></audio>` : ""}
     </section>
+    ${/* البسملة والتأمين: سنة، في بطاقة منفصلة، وما تدخل أبداً في الفحص */ ""}
+    ${sunnahVersesCard(step.sunnahVerses)}
     <p class="hint">${esc(t("listen_repeat_hint"))}</p>
     <button class="btn" id="recited">${esc(t("i_have_recited"))}</button>`;
 }

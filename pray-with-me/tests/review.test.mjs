@@ -194,12 +194,19 @@ test("the help body repeats the step's own words, nothing invented", () => {
   assert.ok(body.includes(ruku.instruction.en), "the instruction must come from fajr.json");
   assert.ok(body.includes(ruku.dhikr.arabic), "the dhikr must come from fajr.json");
   assert.ok(body.includes(ruku.dhikr.transliteration));
-  // no audio player when the step has no audio file yet
-  assert.ok(!body.includes("<audio"), "an empty audio path must not render a player");
+  // ruku has a recording on disk, so the player is there and points at that file
+  assert.ok(body.includes(`src="${ruku.dhikr.audio}"`), "the player must use the step's own file");
 
-  // a guided step with no dhikr still renders cleanly
-  const taslim = JOURNEY.find((s) => s.id === "taslim");
-  assert.ok(!helpBody(taslim).includes("dhikr"), "no dhikr card when the step has none");
+  // the transition takbir has no recording yet: no player, and no "TODO" on screen
+  const noAudio = JOURNEY.find((s) => s.id === "takbir_to_sujood");
+  assert.equal(noAudio.dhikr.audio, "TODO", "this step is the one with no recording");
+  const quiet = helpBody(noAudio);
+  assert.ok(!quiet.includes("<audio"), "a TODO audio path must not render a player");
+  assert.ok(!quiet.includes("TODO"), "the word TODO must never reach the user");
+
+  // a step with no dhikr at all still renders cleanly
+  const standing = JOURNEY.find((s) => s.id === "standing");
+  assert.ok(!helpBody(standing).includes("dhikr"), "no dhikr card when the step has none");
 });
 
 console.log(`\n${passed} passed${process.exitCode ? ", some FAILED" : ""}`);

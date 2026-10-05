@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node tests/align.test.mjs && node tests/journey.test.mjs && node tests/review.test.mjs && node tests/matchers.test.mjs && node tests/speech-switch.test.mjs && node tests/preparation.test.mjs && node tests/figure.test.mjs && node tests/figure-nav.test.mjs",
+    "test": "node tests/align.test.mjs && node tests/content.test.mjs && node tests/journey.test.mjs && node tests/review.test.mjs && node tests/matchers.test.mjs && node tests/speech-switch.test.mjs && node tests/preparation.test.mjs && node tests/figure.test.mjs && node tests/figure-nav.test.mjs",
     "eval:speech": "node scripts/eval-speech.mjs"
   },
   "dependencies": {

@@ -47,7 +47,7 @@ export const SPEECH_CHECK_ENABLED = false;
 export const shouldPreloadASR = () => !USE_MOCK && SPEECH_CHECK_ENABLED;
 
 // شاشة "قبل أن تصلي" (الوقت، الوضوء، الطهارة، الستر، القبلة، النية).
-// ⚠️ **شغّالة بمحتوى مسودّة**: مالكة المحتوى تراجعه الآن، والتعديلات بتجي بعدين.
-// كل عنصر في "preparation" داخل fajr.json عليه "reviewed": false لحد ما تعتمده.
+// مالكة المحتوى اعتمدت المحتوى الست (كل عنصر في "preparation" داخل fajr.json عليه
+// "reviewed": true الآن). المراجعة الشرعية المتخصصة شيء آخر، ولسه معلّقة — انظر SOURCES.md.
 // الشاشة تذكير للمستخدم فقط: التطبيق ما يفحص أياً منها، وما نسجّل الاختيارات ولا نرسلها.
 export const PREPARATION_SCREEN_ENABLED = true;

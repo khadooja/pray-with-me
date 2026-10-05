@@ -6,10 +6,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { POSE_FOR_STEP } from "../src/figure/poses.js";
-import { resolveJourney, journeyAttemptKeys, journeyRakahs, rakahCount } from "../src/content/journey.js";
+import { resolveJourney, journeyAttemptKeys, journeyRakahs, rakahCount, entryId, journeyTransitions }
+  from "../src/content/journey.js";
 
 const fajr = JSON.parse(readFileSync(new URL("../src/content/fajr.json", import.meta.url), "utf8"));
 const byId = Object.fromEntries(fajr.steps.map((s) => [s.id, s]));
+// an "order" entry is either a step id or { id, transition }; the ids are what this file checks
+const ORDER = fajr.order.map(entryId);
 
 let passed = 0;
 function test(name, fn) {
@@ -24,13 +27,15 @@ function test(name, fn) {
   }
 }
 
-const ONE_RAKAH = ["standing", "fatiha", "takbir_transition", "ruku", "rising",
-  "itidal", "takbir_transition", "sujood", "jalsa", "sujood"];
+// the single takbir_transition definition became two: one into ruku (hands raised)
+// and one into sujood (hands not raised)
+const ONE_RAKAH = ["standing", "fatiha", "takbir_to_ruku", "ruku", "rising",
+  "itidal", "takbir_to_sujood", "sujood", "jalsa", "sujood"];
 const EXPECTED_ORDER = ["takbir", ...ONE_RAKAH, "second_rakah", ...ONE_RAKAH, "tashahhud", "taslim"];
 
 test("the journey walks through both rakahs", () => {
-  assert.deepEqual(fajr.order, EXPECTED_ORDER);
-  assert.equal(fajr.order.length, 24, "two rakahs come to 24 steps");
+  assert.deepEqual(ORDER, EXPECTED_ORDER);
+  assert.equal(ORDER.length, 24, "two rakahs come to 24 steps");
 });
 
 test("the second rakah reuses the very same step definitions", () => {
@@ -45,11 +50,11 @@ test("the second rakah reuses the very same step definitions", () => {
 });
 
 test("walking both rakahs added no new definitions", () => {
-  assert.equal(fajr.steps.length, 12, "still twelve definitions for twenty-four steps");
+  assert.equal(fajr.steps.length, 13, "thirteen definitions for twenty-four steps");
 });
 
 test("every step named in the order exists", () => {
-  for (const id of fajr.order) {
+  for (const id of ORDER) {
     assert.ok(byId[id], `"order" names a step with no definition: "${id}"`);
   }
 });
@@ -60,12 +65,13 @@ test("no step is defined twice", () => {
 });
 
 test("a step that happens more than once is one definition, referenced again", () => {
-  const repeated = fajr.order.filter((id, i) => fajr.order.indexOf(id) !== i);
+  const repeated = ORDER.filter((id, i) => ORDER.indexOf(id) !== i);
   assert.deepEqual([...new Set(repeated)].sort(),
-    ["fatiha", "itidal", "jalsa", "rising", "ruku", "standing", "sujood", "takbir_transition"]);
+    ["fatiha", "itidal", "jalsa", "rising", "ruku", "standing", "sujood", "takbir_to_ruku",
+      "takbir_to_sujood"]);
   // resolving the order must hand back the very same object, so the content is
   // written and reviewed once and can never drift between the two occurrences
-  const journey = fajr.order.map((id) => byId[id]);
+  const journey = ORDER.map((id) => byId[id]);
   for (const id of new Set(repeated)) {
     const seen = journey.filter((s) => s.id === id);
     assert.ok(seen.length >= 2, `${id} should appear at least twice in the journey`);
@@ -75,7 +81,7 @@ test("a step that happens more than once is one definition, referenced again", (
 
 test("every definition is actually used by the order", () => {
   for (const s of fajr.steps) {
-    assert.ok(fajr.order.includes(s.id), `"${s.id}" is defined but never used`);
+    assert.ok(ORDER.includes(s.id), `"${s.id}" is defined but never used`);
   }
 });
 
@@ -108,31 +114,34 @@ test("the Al-Fatihah reference text is unchanged", () => {
   );
 });
 
-test("the previously written steps keep their exact texts", () => {
-  assert.equal(byId.takbir.title.en, "Opening Takbir");
+// Every religious text now comes from docs/content-source.md; tests/content.test.mjs
+// compares it character for character. Here we only check which steps carry a dhikr.
+test("the dhikr of each step is present and reviewed", () => {
   assert.equal(byId.takbir.dhikr.arabic, "الله أكبر");
-  assert.equal(byId.standing.instruction.en,
-    "Stand upright, facing forward. Place your right hand over your left hand on your chest.");
   assert.equal(byId.ruku.dhikr.arabic, "سبحان ربي العظيم");
   assert.equal(byId.sujood.dhikr.arabic, "سبحان ربي الأعلى");
-  assert.equal(byId.fatiha.title.ar, "قراءة الفاتحة");
+  // standing is the posture only: the recitation lives in the fatiha step
+  assert.equal(byId.standing.dhikr, undefined, "standing must not carry a dhikr of its own");
+  assert.equal(byId.fatiha.dhikr, undefined, "the fatiha step uses verses, not a dhikr card");
 });
 
-test("the new steps carry TODO text, with no invented religious content", () => {
-  const newOnes = ["takbir_transition", "rising", "itidal", "jalsa", "tashahhud", "taslim"];
-  for (const id of newOnes) {
-    assert.equal(byId[id].instruction.en, "TODO", `${id}: instruction should still be TODO`);
-    assert.equal(byId[id].source, "TODO", `${id}: source should still be TODO`);
-    assert.equal(byId[id].dhikr, undefined, `${id}: must not carry an unreviewed dhikr`);
-  }
-  // second_rakah is a transition step now, not a summary of what to repeat
+test("second_rakah is ours, not the content owner's, and says so", () => {
+  // it is a navigation step we added; it has no row in docs/content-source.md
   assert.equal(byId.second_rakah.instruction.en, "Rise to stand for the second rakah.");
   assert.equal(byId.second_rakah.title.ar, "الركعة الثانية", "its Arabic title is unchanged");
-  assert.equal(byId.second_rakah.source, "TODO");
+  assert.equal(byId.second_rakah.source, "TODO", "no source is claimed for it");
+  assert.equal(byId.second_rakah.dhikr, undefined, "it carries no religious text");
+});
+
+test("transition notes sit on the positions that follow a transition, and nowhere else", () => {
+  const notes = journeyTransitions(fajr);
+  assert.equal(notes.length, 24);
+  const at = notes.map((n, i) => (n ? `${ORDER[i]}@${i}` : null)).filter(Boolean);
+  assert.deepEqual(at, ["jalsa@9", "sujood@10", "second_rakah@11", "jalsa@20", "sujood@21", "tashahhud@22"]);
 });
 
 test("the figure mapping covers the right steps and no others", () => {
-  const withFigure = ["takbir", "standing", "fatiha", "takbir_transition", "ruku", "rising",
+  const withFigure = ["takbir", "standing", "fatiha", "takbir_to_ruku", "takbir_to_sujood", "ruku", "rising",
     "itidal", "sujood", "jalsa", "second_rakah", "tashahhud", "taslim"];
   const withoutFigure = [];
   assert.deepEqual(Object.keys(POSE_FOR_STEP).sort(), [...withFigure].sort());
@@ -140,7 +149,7 @@ test("the figure mapping covers the right steps and no others", () => {
     assert.equal(POSE_FOR_STEP[id], undefined, `${id} should show no figure yet`);
   }
   // rising, itidal and the second rakah all settle on the standing pose
-  for (const id of ["rising", "itidal", "second_rakah", "takbir_transition", "fatiha"]) {
+  for (const id of ["rising", "itidal", "second_rakah", "takbir_to_ruku", "takbir_to_sujood", "fatiha"]) {
     assert.equal(POSE_FOR_STEP[id], "standing", `${id} should use the standing pose`);
   }
   // every mapped step is a real step
@@ -156,16 +165,16 @@ test("the sitting steps use the sitting pose, and taslim has its own back view",
 });
 
 test("every step in the journey now has a figure", () => {
-  const blank = [...new Set(fajr.order)].filter((id) => !POSE_FOR_STEP[id]);
+  const blank = [...new Set(ORDER)].filter((id) => !POSE_FOR_STEP[id]);
   assert.deepEqual(blank, [], `these steps still show no figure: ${blank.join(", ")}`);
 });
 
 // ---------- attempts are recorded per position, not just per step id ----------
-const JOURNEY = fajr.order.map((id) => byId[id]);
+const JOURNEY = ORDER.map((id) => byId[id]);
 const KEYS = journeyAttemptKeys(JOURNEY);
 
 test("every position in the journey gets its own attempt key", () => {
-  assert.equal(KEYS.length, fajr.order.length);
+  assert.equal(KEYS.length, ORDER.length);
   assert.equal(new Set(KEYS).size, KEYS.length, `attempt keys are not unique: ${KEYS.join(", ")}`);
 });
 
@@ -174,17 +183,17 @@ test("the two prostrations are logged separately", () => {
   assert.deepEqual(sujoodKeys, ["sujood#1", "sujood#2", "sujood#3", "sujood#4"],
     "all four prostrations must be distinguishable in the progress data");
   // ...while still being the same definition, so the content is written once
-  const positions = fajr.order.map((id, i) => (id === "sujood" ? i : -1)).filter((i) => i >= 0);
+  const positions = ORDER.map((id, i) => (id === "sujood" ? i : -1)).filter((i) => i >= 0);
   assert.equal(JOURNEY[positions[0]], JOURNEY[positions[1]], "the definition must stay shared");
 });
 
 test("the repeated transition takbir is also logged separately", () => {
-  assert.deepEqual(KEYS.filter((k) => k.startsWith("takbir_transition#")),
-    ["takbir_transition#1", "takbir_transition#2", "takbir_transition#3", "takbir_transition#4"]);
+  assert.deepEqual(KEYS.filter((k) => k.startsWith("takbir_to_")),
+    ["takbir_to_ruku#1", "takbir_to_sujood#1", "takbir_to_ruku#2", "takbir_to_sujood#2"]);
 });
 
 test("each repeated step gets one attempt key per performance", () => {
-  const counts = { takbir: 1, standing: 2, fatiha: 2, takbir_transition: 4, ruku: 2,
+  const counts = { takbir: 1, standing: 2, fatiha: 2, takbir_to_ruku: 2, takbir_to_sujood: 2, ruku: 2,
     rising: 2, itidal: 2, sujood: 4, jalsa: 2, second_rakah: 1, tashahhud: 1, taslim: 1 };
   for (const [id, n] of Object.entries(counts)) {
     assert.equal(KEYS.filter((k) => k.startsWith(`${id}#`)).length, n, `${id} should be performed ${n} time(s)`);
@@ -196,7 +205,7 @@ test("each repeated step gets one attempt key per performance", () => {
 test("the rakah indicator switches right after second_rakah", () => {
   const steps = resolveJourney(fajr);
   const rakahs = journeyRakahs(steps);
-  const breakAt = fajr.order.indexOf("second_rakah");
+  const breakAt = ORDER.indexOf("second_rakah");
   assert.equal(rakahCount(steps), 2, "Fajr is two rakahs");
   assert.equal(rakahs.length, steps.length, "every step must belong to a rakah");
   rakahs.forEach((r, i) => {
