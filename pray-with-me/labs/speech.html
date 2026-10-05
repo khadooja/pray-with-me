@@ -28,8 +28,18 @@
       </dl>
       <section class="card">
         <p class="label">المرجع (الفاتحة):</p>
-        <p class="arabic reference" id="ref"></p>
-      </section>
+<label for="ayah">اختاري المقطع:</label>
+<select id="ayah">
+  <option value="0">بسم الله الرحمن الرحيم</option>
+  <option value="1">الحمد لله رب العالمين</option>
+  <option value="2">الرحمن الرحيم</option>
+  <option value="3">مالك يوم الدين</option>
+  <option value="4">إياك نعبد وإياك نستعين</option>
+  <option value="5">اهدنا الصراط المستقيم</option>
+  <option value="6">صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين</option>
+</select>
+
+<p class="arabic reference" id="ref"></p>      </section>
       <div class="row">
         <button class="btn" id="rec" disabled>تسجيل</button>
         <button class="btn secondary" id="load" disabled>تحميل ملف صوت</button>
@@ -49,8 +59,22 @@
       import { preloadASR, startRecording, decodeAudioBlob, transcribe, compareRecitation } from "/src/speech/index.js";
 
       const $ = (id) => document.getElementById(id);
-      const REF = fajr.steps.find((s) => s.id === "fatiha").reference;
-      $("ref").textContent = REF;
+const AYAT = [
+  "بسم الله الرحمن الرحيم",
+  "الحمد لله رب العالمين",
+  "الرحمن الرحيم",
+  "مالك يوم الدين",
+  "إياك نعبد وإياك نستعين",
+  "اهدنا الصراط المستقيم",
+  "صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين",
+];const ayahSelect = $("ayah");
+
+function updateReference() {
+  $("ref").textContent = AYAT[Number(ayahSelect.value)];
+}
+
+ayahSelect.onchange = updateReference;
+updateReference(); 
       $("model").textContent = ASR_MODEL_ID + ("gpu" in navigator ? " (WebGPU متوفر)" : " (wasm)");
 
       const files = {};
@@ -69,15 +93,25 @@
         .catch((e) => ($("err").textContent = "فشل تحميل النموذج: " + e.message));
 
       // نفس التحليل للتسجيل المباشر وللملف: تفريغ ← مقارنة ← طباعة النتائج.
-      async function analyze(audio) {
-        const seconds = (audio.length / 16000).toFixed(1);
-        const t1 = performance.now();
-        const text = await transcribe(audio, REF);
-        const dt = (performance.now() - t1) / 1000;
-        $("txTime").textContent = `${dt.toFixed(1)} ث لتسجيل مدته ${seconds} ث`;
-        $("transcript").textContent = text || "(فاضي)";
-        $("result").textContent = JSON.stringify(compareRecitation(text, REF), null, 2);
-      }
+    // نفس التحليل للتسجيل المباشر وللملف: تفريغ ← مقارنة ← طباعة النتائج.
+async function analyze(audio) {
+  const seconds = (audio.length / 16000).toFixed(1);
+  const t1 = performance.now();
+
+  // حاليًا نجرب أول مقطع فقط: البسملة.
+const REF = AYAT[Number($("ayah").value)];
+
+  const text = await transcribe(audio, REF);
+  const dt = (performance.now() - t1) / 1000;
+
+  $("txTime").textContent = `${dt.toFixed(1)} ث لتسجيل مدته ${seconds} ث`;
+  $("transcript").textContent = text || "(فاضي)";
+  $("result").textContent = JSON.stringify(
+    compareRecitation(text, REF),
+    null,
+    2
+  );
+}
 
       const setBusy = (busy) => {
         $("rec").disabled = busy;

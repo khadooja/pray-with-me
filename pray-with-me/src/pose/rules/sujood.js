@@ -1,16 +1,28 @@
-// قاعدة السجود: ترجع قائمة أكواد أخطاء (قائمة فاضية = الوضعية صحيحة).
-// ملاحظة: هذي نسخة أولى بسيطة عن قصد — نتحقق بس إن الرأس أوطى بوضوح من الورك.
-// ما نتحقق من الكفين أو الركبتين أو أصابع القدمين. ممكن نطورها بعدين.
 import { THRESHOLDS } from "./thresholds.js";
 import { pickSide, isVisible } from "../geometry.js";
 
 export function checkSujood(landmarks /*, aspect */) {
   const T = THRESHOLDS.sujood;
-  const { nose, hip } = pickSide(landmarks);
 
-  if (!isVisible(nose, hip)) return ["not_visible"];
+  // نستخدم جهة واحدة فقط: الجهة التي اختارها pickSide
+  const {
+    nose,
+    hip,
+    knee,
+    ankle,
+    wrist,
+  } = pickSide(landmarks);
 
-  // في الصورة y يكبر كل ما نزلنا تحت، فالرأس الواطي = y أكبر
-  if (!(nose.y > hip.y + T.headBelowHipMargin)) return ["head_not_low"];
-  return [];
+  if (!isVisible(nose, hip, knee, ankle)) {
+    return ["not_visible"];
+  }
+
+  const issues = [];
+
+  // الرأس يجب أن يكون أسفل الورك
+  if (!(nose.y > hip.y + T.headBelowHipMargin)) {
+    issues.push("head_not_low");
+  }
+
+  return issues;
 }
