@@ -13,7 +13,7 @@
         "arabic": "الله أكبر",
         "transliteration": "Allāhu Akbar",
         "meaning": { "en": "Allah is the Greatest" },
-        "audio": ""
+        "audio": "/audio/التكبير.mp3"
       },
       "source": "TODO"
     },
@@ -52,7 +52,7 @@
         "arabic": "سبحان ربي العظيم",
         "transliteration": "Subhana Rabbiyal- ‘Azeem",
         "meaning": { "en": "Glory be to my Lord, the Ever-Magnificent" },
-        "audio": ""
+        "audio": "/audio/سبحان ربي العظيم.mp3"
       },
       "source": "TODO"
     },
@@ -68,7 +68,7 @@
         "arabic": "سبحان ربي الأعلى",
         "transliteration": "Subhāna Rabbī al-A‘la",
         "meaning": { "en": "Glory be to my Lord, the Most High" },
-        "audio": ""
+        "audio": "/audio/سبحان ربي الأعلى.mp3"
       },
       "source": "TODO"
     }
