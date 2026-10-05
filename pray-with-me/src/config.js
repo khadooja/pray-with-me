@@ -14,7 +14,6 @@ export const POSE_MODEL_URL =
 // The AI teammate may swap in a Quran-tuned ONNX Whisper model here
 // (it must be a transformers.js-compatible ONNX export on Hugging Face).
 export const ASR_MODEL_ID = "Xenova/whisper-base";
-
 // How many seconds the user must hold a correct pose before the step counts as done.
 export const POSE_HOLD_SECONDS = 2;
 

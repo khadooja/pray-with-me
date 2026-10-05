@@ -47,10 +47,8 @@ export function levenshtein(a, b) {
 // Equal, or long enough (>= 4 letters) and at most one letter different.
 // Tolerates small ASR / spelling differences (e.g. ملك vs مالك).
 export function similar(a, b) {
-  if (a === b) return true;
-  return Math.max(a.length, b.length) >= 4 && levenshtein(a, b) <= 1;
+  return a === b;
 }
-
 export function compareRecitation(transcript, reference) {
   const ref = words(reference);
   const hyp = words(transcript);

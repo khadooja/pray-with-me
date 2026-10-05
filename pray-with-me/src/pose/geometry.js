@@ -4,16 +4,27 @@
 // MediaPipe Pose landmark indices we use.
 export const P = {
   NOSE: 0,
+
   LEFT_SHOULDER: 11,
   RIGHT_SHOULDER: 12,
+
+  LEFT_ELBOW: 13,
+  RIGHT_ELBOW: 14,
+
   LEFT_WRIST: 15,
   RIGHT_WRIST: 16,
+
   LEFT_HIP: 23,
   RIGHT_HIP: 24,
+
   LEFT_KNEE: 25,
   RIGHT_KNEE: 26,
+
   LEFT_ANKLE: 27,
   RIGHT_ANKLE: 28,
+
+  LEFT_FOOT: 31,
+  RIGHT_FOOT: 32,
 };
 
 const DEG = 180 / Math.PI;
@@ -39,15 +50,32 @@ export function inclineFromHorizontal(a, b, aspect = 1) {
 // Pick the side whose shoulder+hip+knee+ankle are most visible.
 export function pickSide(landmarks) {
   const vis = (i) => landmarks[i]?.visibility ?? 0;
-  const leftScore = vis(P.LEFT_SHOULDER) + vis(P.LEFT_HIP) + vis(P.LEFT_KNEE) + vis(P.LEFT_ANKLE);
-  const rightScore = vis(P.RIGHT_SHOULDER) + vis(P.RIGHT_HIP) + vis(P.RIGHT_KNEE) + vis(P.RIGHT_ANKLE);
+
+  const leftScore =
+    vis(P.LEFT_SHOULDER) +
+    vis(P.LEFT_HIP) +
+    vis(P.LEFT_KNEE) +
+    vis(P.LEFT_ANKLE);
+
+  const rightScore =
+    vis(P.RIGHT_SHOULDER) +
+    vis(P.RIGHT_HIP) +
+    vis(P.RIGHT_KNEE) +
+    vis(P.RIGHT_ANKLE);
+
   const left = leftScore >= rightScore;
+
   return {
     shoulder: landmarks[left ? P.LEFT_SHOULDER : P.RIGHT_SHOULDER],
+    elbow: landmarks[left ? P.LEFT_ELBOW : P.RIGHT_ELBOW],
+    wrist: landmarks[left ? P.LEFT_WRIST : P.RIGHT_WRIST],
+
     hip: landmarks[left ? P.LEFT_HIP : P.RIGHT_HIP],
     knee: landmarks[left ? P.LEFT_KNEE : P.RIGHT_KNEE],
     ankle: landmarks[left ? P.LEFT_ANKLE : P.RIGHT_ANKLE],
-    wrist: landmarks[left ? P.LEFT_WRIST : P.RIGHT_WRIST],
+
+    foot: landmarks[left ? P.LEFT_FOOT : P.RIGHT_FOOT],
+
     nose: landmarks[P.NOSE],
   };
 }

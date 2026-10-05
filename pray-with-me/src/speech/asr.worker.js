@@ -32,12 +32,10 @@ async function getPipeline(modelId) {
   current.promise.catch(() => (current = { modelId: null, device: null, promise: null }));
   return current.promise;
 }
-
 async function run(asr, audio) {
   const out = await asr(audio, {
     language: "arabic",
     task: "transcribe",
-    // Al-Fatihah can be longer than Whisper's 30 s window.
     chunk_length_s: 30,
     stride_length_s: 5,
   });

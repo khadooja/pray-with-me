@@ -6,19 +6,20 @@
 export const THRESHOLDS = {
   standing: {
     // القيام: الجذع (من الكتف إلى الورك) لازم يكون شبه عمودي
-    minTorsoIncline: 70,
+    minTorsoIncline: 20,
     // زاوية الركبة (ورك-ركبة-كاحل): 180 = رجل مستقيمة تماماً
-    minKneeAngle: 160,
+    minKneeAngle: 60,
   },
   ruku: {
     // الركوع: الظهر لازم يكون قريب من الأفقي، يعني الميلان صغير
-    maxTorsoIncline: 30,
+    maxTorsoIncline: 10,
     // الركبتين مستقيمتين تقريباً (نسمح بانحناء بسيط)
     minKneeAngle: 150,
   },
-  sujood: {
-    // السجود: الأنف لازم يكون أوطى من الورك بهالمقدار على الأقل
-    // (نسبة من ارتفاع الصورة، 0.15 = 15% من ارتفاع الصورة)
-    headBelowHipMargin: 0.15,
-  },
+sujood: {
+  headBelowHipMargin: 0.15,
+  wristGroundMargin: 0.12,
+  kneeGroundMargin: 0.12,
+  elbowAboveWristMargin: 0.03,
+},
 };
