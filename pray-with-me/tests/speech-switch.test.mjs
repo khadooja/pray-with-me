@@ -11,6 +11,7 @@ import { readFileSync } from "node:fs";
 import {
   SPEECH_CHECK_ENABLED, shouldPreloadASR, isMobileDevice, asrDtype, asrSizeMB,
   ASR_DTYPE_DESKTOP, ASR_DTYPE_MOBILE, ASR_SIZE_MB,
+  SLOW_TRANSCRIBE_MS, SLOW_TRANSCRIBE_MS_MOBILE, slowTranscribeMs,
 } from "../src/config.js";
 import { footerKey, speechChecksKey, speechChecked } from "../src/ui/scope.js";
 import { listenStepHtml, renderListenStep, ready } from "../src/ui/listen-step.js";
@@ -243,6 +244,13 @@ test("the worker downloads the model without a Referer (Hugging Face 404s *.work
 
 test("the worker only picks WebGPU when the device actually gives it an adapter", () => {
   assert.match(read("../src/speech/asr.worker.js"), /navigator\.gpu\.requestAdapter\(\)/);
+});
+
+test("phones get more time per verse before the 'too slow' fallback (a real iPhone took 22 s)", () => {
+  assert.equal(slowTranscribeMs(IPHONE), SLOW_TRANSCRIBE_MS_MOBILE);
+  assert.ok(SLOW_TRANSCRIBE_MS_MOBILE > 22000, "must not throw away a 22 s result on a phone");
+  assert.equal(slowTranscribeMs(WINDOWS), SLOW_TRANSCRIBE_MS);
+  assert.match(read("../src/ui/verse-step.js"), /slowMs = slowTranscribeMs\(\)/);
 });
 
 test("the loading line shows the size for this device, not a fixed number", () => {

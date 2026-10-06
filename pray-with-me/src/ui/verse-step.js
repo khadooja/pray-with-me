@@ -11,7 +11,7 @@ import { sunnahVersesCard, ready } from "./step-content.js";
 import { startRecording as realStartRecording, transcribe as realTranscribe } from "../speech/index.js";
 import { recordAttempt as realRecordAttempt } from "../progress/store.js";
 import { checkableVerses, checkVerse, aggregate, COMPLETE, SKIPPED } from "../speech/verse-check.js";
-import { SLOW_TRANSCRIBE_MS, asrSizeMB } from "../config.js";
+import { slowTranscribeMs, asrSizeMB } from "../config.js";
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -87,7 +87,7 @@ export function renderVerseStep(step, root, attemptKey, deps = {}) {
     now = () => Date.now(),
     setTimer = (fn, ms) => setInterval(fn, ms),
     clearTimer = (id) => clearInterval(id),
-    slowMs = SLOW_TRANSCRIBE_MS,
+    slowMs = slowTranscribeMs(),
   } = deps;
   const startRecording = speech.startRecording ?? realStartRecording;
   const transcribe = speech.transcribe ?? realTranscribe;

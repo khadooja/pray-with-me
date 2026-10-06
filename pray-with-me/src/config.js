@@ -39,6 +39,10 @@ export const asrSizeMB = (nav) => (isMobileDevice(nav) ? ASR_SIZE_MB.mobile : AS
 // إذا تفريغ آية واحدة تجاوز هذا الوقت على جهاز بدون WebGPU، نرجع لـ"اسمع وردّد"
 // تلقائياً بدل ما نخلي المستخدم ينتظر كل آية.
 export const SLOW_TRANSCRIBE_MS = 20000;
+// الجوال أبطأ: آيفون حقيقي (2026-10-06) فحص "الحمد لله رب العالمين" في 22 ثانية، فكان
+// حد الـ 20 ثانية يرمي نتيجة صحيحة. للجوال نسمح بـ 45 ثانية (عدّاد الثواني يظهر وهو ينتظر).
+export const SLOW_TRANSCRIBE_MS_MOBILE = 45000;
+export const slowTranscribeMs = (nav) => (isMobileDevice(nav) ? SLOW_TRANSCRIBE_MS_MOBILE : SLOW_TRANSCRIBE_MS);
 // How many seconds the user must hold a correct pose before the step counts as done.
 export const POSE_HOLD_SECONDS = 2;
 

@@ -76,7 +76,8 @@ The model loads when you reach the first step of the prayer (not when the app op
 uploaded anywhere — it's a one-way download from Hugging Face; size: about 380 MB on a computer, about
 150 MB on a phone or tablet — see below). If it fails to
 load, the microphone is refused, **or transcribing a verse takes more than 20 seconds on a
-device without WebGPU** (`SLOW_TRANSCRIBE_MS` in `src/config.js`), the step **falls back to
+computer without WebGPU, or 45 seconds on a phone** (`SLOW_TRANSCRIBE_MS` / `SLOW_TRANSCRIBE_MS_MOBILE`
+in `src/config.js`; a real iPhone took 22 s for one verse), the step **falls back to
 listen-and-repeat on its own** with a short note — nothing you say is judged in that case
 either, and the journey is never blocked.
 
