@@ -5,50 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>مختبر التلاوة | Pray With Me</title>
     <link rel="stylesheet" href="/src/ui/style.css" />
+
     <style>
-      .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
-      pre { direction: ltr; text-align: left; background: var(--card); padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 0.9rem; white-space: pre-wrap; }
-      dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; }
-      dt { color: var(--muted); }
-      dd { margin: 0; }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      pre {
+        direction: ltr;
+        text-align: left;
+        background: var(--card);
+        padding: 12px;
+        border-radius: 10px;
+        overflow-x: auto;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+      }
+
+      dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 6px 12px;
+      }
+
+      dt {
+        color: var(--muted);
+      }
+
+      dd {
+        margin: 0;
+      }
     </style>
   </head>
+
   <body>
     <main id="app">
       <h1>مختبر التلاوة</h1>
+
       <p class="hint">
         الهدف: نقيس سرعة التعرف على الكلام (خصوصاً على الجوال) ونجرب نماذج مختلفة.
-        النموذج الحالي محدد في <code dir="ltr">src/config.js</code> (ASR_MODEL_ID).
+        النموذج الحالي محدد في
+        <code dir="ltr">src/config.js</code>
+        (ASR_MODEL_ID).
       </p>
-      <dl>
-        <dt>النموذج</dt><dd id="model" dir="ltr"></dd>
-        <dt>التحميل</dt><dd id="progress">—</dd>
-        <dt>وقت التحميل</dt><dd id="loadTime">—</dd>
-        <dt>وقت التفريغ</dt><dd id="txTime">—</dd>
-      </dl>
-      <section class="card">
-        <p class="label">المرجع (الفاتحة):</p>
-<label for="ayah">اختاري المقطع:</label>
-<select id="ayah">
-  <option value="0">بسم الله الرحمن الرحيم</option>
-  <option value="1">الحمد لله رب العالمين</option>
-  <option value="2">الرحمن الرحيم</option>
-  <option value="3">مالك يوم الدين</option>
-  <option value="4">إياك نعبد وإياك نستعين</option>
-  <option value="5">اهدنا الصراط المستقيم</option>
-  <option value="6">صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين</option>
-</select>
 
-<p class="arabic reference" id="ref"></p>      </section>
+      <dl>
+        <dt>النموذج</dt>
+        <dd id="model" dir="ltr"></dd>
+
+        <dt>التحميل</dt>
+        <dd id="progress">—</dd>
+
+        <dt>وقت التحميل</dt>
+        <dd id="loadTime">—</dd>
+
+        <dt>وقت التفريغ</dt>
+        <dd id="txTime">—</dd>
+      </dl>
+
+      <section class="card">
+
+        <!-- الفاتحة -->
+        <p class="label">المرجع (الفاتحة):</p>
+
+        <label for="ayah">اختاري المقطع:</label>
+
+        <select id="ayah">
+          <option value="0">بسم الله الرحمن الرحيم</option>
+          <option value="1">الحمد لله رب العالمين</option>
+          <option value="2">الرحمن الرحيم</option>
+          <option value="3">مالك يوم الدين</option>
+          <option value="4">إياك نعبد وإياك نستعين</option>
+          <option value="5">اهدنا الصراط المستقيم</option>
+          <option value="6">
+            صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين
+          </option>
+        </select>
+
+        <!-- الأذكار -->
+        <p class="label">الذكر:</p>
+
+        <label for="dhikr">اختاري الذكر:</label>
+
+        <select id="dhikr">
+          <option value="0">الله أكبر</option>
+          <option value="1">سبحان ربي العظيم</option>
+          <option value="2">سمع الله لمن حمده</option>
+          <option value="3">ربنا ولك الحمد</option>
+          <option value="4">سبحان ربي الأعلى</option>
+          <option value="5">رب اغفر لي</option>
+          <option value="6">التحيات لله والصلوات والطيبات...</option>
+          <option value="7">اللهم صل على محمد...</option>
+          <option value="8">السلام عليكم ورحمة الله</option>
+        </select>
+
+        <p class="arabic reference" id="ref"></p>
+
+      </section>
+
       <div class="row">
         <button class="btn" id="rec" disabled>تسجيل</button>
-        <button class="btn secondary" id="load" disabled>تحميل ملف صوت</button>
+
+        <button class="btn secondary" id="load" disabled>
+          تحميل ملف صوت
+        </button>
+
         <input type="file" id="file" accept="audio/*" hidden />
       </div>
+
       <p class="hint" id="fileInfo"></p>
+
       <p class="feedback warn" id="err"></p>
+
       <h2>النص المسموع</h2>
       <p class="arabic reference" id="transcript">—</p>
+
       <h2>نتيجة المقارنة</h2>
       <pre id="result">—</pre>
     </main>
@@ -56,121 +131,267 @@
     <script type="module">
       import fajr from "/src/content/fajr.json";
       import { ASR_MODEL_ID } from "/src/config.js";
-      import { preloadASR, startRecording, decodeAudioBlob, transcribe, compareRecitation } from "/src/speech/index.js";
+
+      import {
+        preloadASR,
+        startRecording,
+        decodeAudioBlob,
+        transcribe,
+        compareRecitation
+      } from "/src/speech/index.js";
 
       const $ = (id) => document.getElementById(id);
-const AYAT = [
-  "بسم الله الرحمن الرحيم",
-  "الحمد لله رب العالمين",
-  "الرحمن الرحيم",
-  "مالك يوم الدين",
-  "إياك نعبد وإياك نستعين",
-  "اهدنا الصراط المستقيم",
-  "صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين",
-];const ayahSelect = $("ayah");
 
-function updateReference() {
-  $("ref").textContent = AYAT[Number(ayahSelect.value)];
-}
+      // =========================
+      // آيات الفاتحة
+      // =========================
 
-ayahSelect.onchange = updateReference;
-updateReference(); 
-      $("model").textContent = ASR_MODEL_ID + ("gpu" in navigator ? " (WebGPU متوفر)" : " (wasm)");
+      const AYAT = [
+        "بسم الله الرحمن الرحيم",
+        "الحمد لله رب العالمين",
+        "الرحمن الرحيم",
+        "مالك يوم الدين",
+        "إياك نعبد وإياك نستعين",
+        "اهدنا الصراط المستقيم",
+        "صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين",
+      ];
+
+      // =========================
+      // الأذكار
+      // =========================
+
+      const DHIKR = [
+        "الله أكبر",
+        "سبحان ربي العظيم",
+        "سمع الله لمن حمده",
+        "ربنا ولك الحمد",
+        "سبحان ربي الأعلى",
+        "رب اغفر لي",
+        "التحيات لله والصلوات والطيبات...",
+        "اللهم صل على محمد...",
+        "السلام عليكم ورحمة الله",
+      ];
+
+      const ayahSelect = $("ayah");
+      const dhikrSelect = $("dhikr");
+
+      // =========================
+      // عرض الذكر المختار
+      // =========================
+
+      function updateReference() {
+        const selectedDhikr =
+          DHIKR[Number(dhikrSelect.value)];
+
+        $("ref").textContent = selectedDhikr;
+      }
+
+      dhikrSelect.onchange = updateReference;
+
+      updateReference();
+
+      // =========================
+      // معلومات النموذج
+      // =========================
+
+      $("model").textContent =
+        ASR_MODEL_ID +
+        ("gpu" in navigator
+          ? " (WebGPU متوفر)"
+          : " (wasm)");
+
+      // =========================
+      // تحميل النموذج
+      // =========================
 
       const files = {};
       const t0 = performance.now();
+
       preloadASR((p) => {
         if (p.status !== "progress" || !p.file) return;
+
         files[p.file] = Math.round(p.progress ?? 0);
-        $("progress").textContent = Object.entries(files).map(([f, v]) => `${f}: ${v}%`).join(" · ");
+
+        $("progress").textContent = Object.entries(files)
+          .map(([f, v]) => `${f}: ${v}%`)
+          .join(" · ");
       })
         .then(() => {
-          $("loadTime").textContent = ((performance.now() - t0) / 1000).toFixed(1) + " ث";
+          $("loadTime").textContent =
+            ((performance.now() - t0) / 1000).toFixed(1) +
+            " ث";
+
           $("progress").textContent = "جاهز ✓";
+
           $("rec").disabled = false;
           $("load").disabled = false;
         })
-        .catch((e) => ($("err").textContent = "فشل تحميل النموذج: " + e.message));
+        .catch(
+          (e) =>
+            ($("err").textContent =
+              "فشل تحميل النموذج: " + e.message)
+        );
 
-      // نفس التحليل للتسجيل المباشر وللملف: تفريغ ← مقارنة ← طباعة النتائج.
-    // نفس التحليل للتسجيل المباشر وللملف: تفريغ ← مقارنة ← طباعة النتائج.
-async function analyze(audio) {
-  const seconds = (audio.length / 16000).toFixed(1);
-  const t1 = performance.now();
+      // =========================
+      // تحليل الصوت
+      // =========================
 
-  // حاليًا نجرب أول مقطع فقط: البسملة.
-const REF = AYAT[Number($("ayah").value)];
+      async function analyze(audio) {
+        const seconds =
+          (audio.length / 16000).toFixed(1);
 
-  const text = await transcribe(audio, REF);
-  const dt = (performance.now() - t1) / 1000;
+        const t1 = performance.now();
 
-  $("txTime").textContent = `${dt.toFixed(1)} ث لتسجيل مدته ${seconds} ث`;
-  $("transcript").textContent = text || "(فاضي)";
-  $("result").textContent = JSON.stringify(
-    compareRecitation(text, REF),
-    null,
-    2
-  );
-}
+        // الذكر المختار هو المرجع المستخدم للمقارنة
+        const REF =
+          DHIKR[Number(dhikrSelect.value)];
+
+        const text = await transcribe(
+          audio,
+          REF
+        );
+
+        const dt =
+          (performance.now() - t1) / 1000;
+
+        $("txTime").textContent =
+          `${dt.toFixed(1)} ث لتسجيل مدته ${seconds} ث`;
+
+        $("transcript").textContent =
+          text || "(فاضي)";
+
+        $("result").textContent =
+          JSON.stringify(
+            compareRecitation(text, REF),
+            null,
+            2
+          );
+      }
+
+      // =========================
+      // حالة الأزرار
+      // =========================
 
       const setBusy = (busy) => {
         $("rec").disabled = busy;
         $("load").disabled = busy;
       };
 
+      // =========================
+      // التسجيل
+      // =========================
+
       let recording = null;
+
       $("rec").onclick = async () => {
         const btn = $("rec");
+
         $("err").textContent = "";
+
+        // بدء التسجيل
         if (!recording) {
           try {
-            recording = await startRecording();
+            recording =
+              await startRecording();
+
             btn.textContent = "إيقاف";
+
             $("load").disabled = true;
           } catch (e) {
-            $("err").textContent = "ما قدرنا نشغل المايك: " + e.message;
+            $("err").textContent =
+              "ما قدرنا نشغل المايك: " +
+              e.message;
           }
+
           return;
         }
+
+        // إيقاف التسجيل
         const rec = recording;
+
         recording = null;
+
         setBusy(true);
-        btn.textContent = "جاري التفريغ…";
+
+        btn.textContent =
+          "جاري التفريغ…";
+
         try {
-          await analyze(await rec.stop());
+          await analyze(
+            await rec.stop()
+          );
         } catch (e) {
           console.error(e);
-          $("err").textContent = "خطأ: " + e.message;
+
+          $("err").textContent =
+            "خطأ: " + e.message;
         } finally {
           setBusy(false);
+
           btn.textContent = "تسجيل";
         }
       };
 
-      // ملف صوت من جهازك: يتفك ترميزه داخل المتصفح (16 كيلوهرتز، قناة وحدة) بدون رفع أو تخزين.
-      $("load").onclick = () => $("file").click();
+      // =========================
+      // رفع ملف صوت
+      // =========================
+
+      $("load").onclick = () =>
+        $("file").click();
+
       $("file").onchange = async () => {
-        const file = $("file").files[0];
-        $("file").value = ""; // عشان لو اخترتي نفس الملف مرة ثانية يشتغل
+        const file =
+          $("file").files[0];
+
+        $("file").value = "";
+
         if (!file) return;
+
         $("err").textContent = "";
-        $("fileInfo").textContent = `الملف: ${file.name}`;
+
+        $("fileInfo").textContent =
+          `الملف: ${file.name}`;
+
         setBusy(true);
-        $("load").textContent = "جاري التفريغ…";
+
+        $("load").textContent =
+          "جاري التفريغ…";
+
         try {
-          const t0 = performance.now();
-          const audio = await decodeAudioBlob(file).catch((e) => {
-            throw new Error("المتصفح ما قدر يفك ترميز هذا الملف (جربي m4a أو mp3 أو wav أو webm): " + e.message);
-          });
-          const decodeSec = ((performance.now() - t0) / 1000).toFixed(1);
-          $("fileInfo").textContent = `الملف: ${file.name} · فك الترميز: ${decodeSec} ث`;
+          const t0 =
+            performance.now();
+
+          const audio =
+            await decodeAudioBlob(file)
+              .catch((e) => {
+                throw new Error(
+                  "المتصفح ما قدر يفك ترميز هذا الملف (جربي m4a أو mp3 أو wav أو webm): " +
+                    e.message
+                );
+              });
+
+          const decodeSec =
+            (
+              (performance.now() - t0) /
+              1000
+            ).toFixed(1);
+
+          $("fileInfo").textContent =
+            `الملف: ${file.name} · فك الترميز: ${decodeSec} ث`;
+
           await analyze(audio);
         } catch (e) {
           console.error(e);
-          $("err").textContent = e.message.startsWith("المتصفح") ? e.message : "خطأ: " + e.message;
+
+          $("err").textContent =
+            e.message.startsWith("المتصفح")
+              ? e.message
+              : "خطأ: " + e.message;
         } finally {
           setBusy(false);
-          $("load").textContent = "تحميل ملف صوت";
+
+          $("load").textContent =
+            "تحميل ملف صوت";
         }
       };
     </script>
