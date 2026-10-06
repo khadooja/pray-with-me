@@ -112,13 +112,12 @@ One optional clip per step, referenced by the `video` field in `fajr.json`.
 | ONNX Runtime Web (dependency of transformers.js) | — | MIT | https://github.com/microsoft/onnxruntime |
 | Whisper base (`Xenova/whisper-base`, from OpenAI Whisper) — named fallback (`ASR_MODEL_FALLBACK`), and the lab page's default | TODO (size) | MIT (verify on the model card) | https://huggingface.co/Xenova/whisper-base |
 | Vite | ^5 | MIT | https://vitejs.dev |
-| Quran-tuned Whisper (`YunusZJ/whisper-base-ar-quran-ONNX`) — now `ASR_MODEL_ID`, downloaded whenever the recitation check is on (it is, today) | TODO (size) | **TODO — unconfirmed, and the check is already live with this model** | TODO |
+| Quran-tuned Whisper (`YunusZJ/whisper-base-ar-quran-ONNX`) — now `ASR_MODEL_ID`, downloaded whenever the recitation check is on (it is, today) | TODO (size) | **Apache-2.0** (as reported by the AI teammate from the model's Hugging Face page, 2026-10-06) | https://huggingface.co/YunusZJ/whisper-base-ar-quran-ONNX |
 
 `SPEECH_CHECK_ENABLED` is `true` in `src/config.js` today: the Al-Fatihah step checks each verse's
 recitation, and the app downloads the Quran-tuned model above the first time the user reaches the
-prayer (size: `TODO`). **Its license is still `TODO`** — this is an open item: the check is live
-with an unconfirmed license, and the AI teammate needs to confirm it (or the app should fall back
-to `ASR_MODEL_FALLBACK` / have the switch turned off) before this goes further. If the switch is
+prayer (download size still `TODO`). **Its license is now confirmed Apache-2.0** (reported by the
+AI teammate from the model's Hugging Face page, 2026-10-06 — see the link in the table above). If the switch is
 off, the app downloads no speech model at all; only `/labs/speech.html` loads one.
 
 ## Tools used during development

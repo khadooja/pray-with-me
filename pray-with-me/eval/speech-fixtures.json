@@ -33,5 +33,38 @@
       "transcript": "الحمد لله رب العالمين الرحمن الرحيم مالك يوم الدين وإياكان استعين صراط الذين أن أمت عليهم غير المغضوب عليهم ولبالين",
       "expectedMissing": ["اهدنا", "الصراط", "المستقيم"]
     }
+  ],
+  "_verseCasesNote": "حالات حقيقية للمطابق الجديد آية-آية (src/speech/verse-check.js)، كل حالة transcript فيها تلاوة آية واحدة فقط لا السورة كاملة. عمداً في مصفوفة منفصلة عن \"cases\": npm run eval:speech وtests/matchers.test.mjs يقرآن \"cases\" فقط (المطابقة على السورة كاملة)، فهذي الحالات ما تؤثر عليهما. مصدر الحالتين: AI teammate hand test, 2026-10-06.",
+  "verseCases": [
+    {
+      "id": "V1",
+      "kind": "real",
+      "source": "AI teammate hand test, 2026-10-06",
+      "note": "آية البسملة كاملة، تلاوة صحيحة",
+      "verseReference": "بسم الله الرحمن الرحيم",
+      "recited": "full",
+      "transcript": "بسم الله الرحمن الرحيم",
+      "expectedMissing": [],
+      "orderOk": true,
+      "matched": 4,
+      "total": 4,
+      "recordingSeconds": 6.2,
+      "transcribeSeconds": 10.9
+    },
+    {
+      "id": "V2",
+      "kind": "real",
+      "source": "AI teammate hand test, 2026-10-06",
+      "note": "النموذج سمع \"رب العالمين\" فقط؛ النظام ما اخترع كلمات ناقصة",
+      "verseReference": "الحمد لله رب العالمين",
+      "recited": "omitted",
+      "transcript": "رب العالمين",
+      "expectedMissing": ["الحمد", "لله"],
+      "orderOk": true,
+      "matched": 2,
+      "total": 4,
+      "recordingSeconds": 5.8,
+      "transcribeSeconds": 5.9
+    }
   ]
 }
