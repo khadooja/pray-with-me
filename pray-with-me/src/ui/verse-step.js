@@ -10,7 +10,7 @@ import { t } from "../i18n/index.js";
 import { sunnahVersesCard, ready } from "./step-content.js";
 import { startRecording as realStartRecording, transcribe as realTranscribe } from "../speech/index.js";
 import { recordAttempt as realRecordAttempt } from "../progress/store.js";
-import { checkableVerses, checkVerse, aggregate, COMPLETE, SKIPPED } from "../speech/verse-check.js";
+import { checkableVerses, checkVerse, aggregate, COMPLETE, SKIPPED, TOO_LONG } from "../speech/verse-check.js";
 import { slowTranscribeMs, asrSizeMB } from "../config.js";
 
 const esc = (s) =>
@@ -249,7 +249,8 @@ export function renderVerseStep(step, root, attemptKey, deps = {}) {
       // بطيء جداً وبدون WebGPU: نرجع لـ"اسمع وردّد" بدل ما ينتظر كل آية
       if (!mock && tookMs > slowMs && !hasWebGPU) return fallback(FALLBACK_SLOW);
 
-      const result = checkVerse(text, verse, index);
+      // البسملة والتأمين (سنة) ما تنحسب كلمات زيادة
+      const result = checkVerse(text, verse, index, (step.sunnahVerses ?? []).map((v) => v.arabic));
       results[index] = result;
 
       // في الحالتين: الإعادة على #rec، والتقدّم على #next. يتغيّر التمييز فقط.
@@ -260,7 +261,9 @@ export function renderVerseStep(step, root, attemptKey, deps = {}) {
         btn.className = "btn secondary";
         revealNext(true); // الآية صحيحة: التقدّم هو الإجراء الأساسي
       } else {
-        if (!result.orderOk) setFeedback(esc(t("speech_order")), "warn");
+        // قرأ أكثر من الآية المعروضة: ما نقول "صحيح"، نطلب يسجّل الآية المعروضة بس
+        if (result.status === TOO_LONG) setFeedback(esc(t("verse_too_long")), "warn");
+        else if (!result.orderOk) setFeedback(esc(t("speech_order")), "warn");
         else {
           setFeedback(
             `${esc(t("speech_missing"))} <span class="arabic missing" dir="rtl" lang="ar">${esc(result.missing.join(" "))}</span>`,

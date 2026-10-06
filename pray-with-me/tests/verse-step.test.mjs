@@ -252,6 +252,24 @@ test("one bad verse means one failed attempt and no success sheet", async () => 
   assert.equal(s.finished[0][1].byVerse[3].status, "incomplete", "and the bad verse is identified");
 });
 
+test("reciting the whole surah on one verse's screen shows 'recited more', never 'Correct'", async () => {
+  const s = setup({ speech: { transcripts: [allCorrect.join(" ")] } });
+  await s.root.querySelector("#rec").onclick();
+  await s.root.querySelector("#rec").onclick(); // verse 1 checked against the whole surah
+  const fb = s.root.querySelector("#fb");
+  assert.ok(fb.innerHTML.includes(en.verse_too_long), "the user is told to record only this verse");
+  assert.ok(!fb.innerHTML.includes(en.verse_complete), "and is not told it was correct");
+  assert.equal(s.root.querySelector("#next").hidden, false, "never stuck: the way forward stays");
+});
+
+test("the basmala said before verse 1 still gives 'Correct'", async () => {
+  const transcripts = [`${normalizeArabic(STEP.sunnahVerses[0].arabic)} ${allCorrect[0]}`];
+  const s = setup({ speech: { transcripts } });
+  await s.root.querySelector("#rec").onclick();
+  await s.root.querySelector("#rec").onclick();
+  assert.ok(s.root.querySelector("#fb").innerHTML.includes(en.verse_complete));
+});
+
 test("the way forward appears only once the verse has a result", async () => {
   const s = setup({ speech: { transcripts: allCorrect } });
   assert.ok(s.root.innerHTML.includes('id="next" hidden'), "nothing to carry forward yet");

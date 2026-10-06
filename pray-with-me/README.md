@@ -63,7 +63,10 @@ currently **`true`**.
   transliteration and its meaning, record just that verse, and are told whether every word of
   **that verse** was said in the right order — with "Try this verse again", "Next verse" and
   "Skip this verse", so you are never stuck. The whole step counts as correct only if every
-  verse did. Checking one verse at a time keeps a word the model splits or merges from spoiling
+  verse did. If clearly more than the verse on screen is recited (more than 2 extra words — the
+  basmala and "amin" never count), the app says so instead of "Correct", because it only checks
+  the verse on screen: a tester once recited the whole surah on verse 1's screen, left a verse out,
+  and was told "Correct". Checking one verse at a time keeps a word the model splits or merges from spoiling
   the rest of the surah, and it tells you exactly which verse to repeat.
 - **Off:** the Al-Fatihah step is "listen and repeat" — the verses are shown, you recite
   at your own pace and press a button to continue. **No microphone is requested, no speech model

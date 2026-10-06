@@ -118,6 +118,7 @@
   "verse_of": "Verse {x} of {n}",
   "full_recitation": "The whole surah:",
   "verse_complete": "Correct! Every word of this verse was recited, in order.",
+  "verse_too_long": "You recited more than this verse. Record only the verse shown on the screen.",
   "next_verse": "Next verse",
   "try_verse_again": "Try this verse again",
   "skip_verse": "Skip this verse",

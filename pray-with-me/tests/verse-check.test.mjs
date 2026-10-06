@@ -9,12 +9,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { normalizeArabic } from "../src/speech/align.js";
-import { checkableVerses, checkVerse, aggregate, COMPLETE, INCOMPLETE, SKIPPED }
+import { checkableVerses, checkVerse, aggregate, COMPLETE, INCOMPLETE, SKIPPED, TOO_LONG, EXTRA_WORDS_ALLOWED }
   from "../src/speech/verse-check.js";
 
 const fajr = JSON.parse(readFileSync(new URL("../src/content/fajr.json", import.meta.url), "utf8"));
 const STEP = fajr.steps.find((s) => s.id === "fatiha");
 const VERSES = checkableVerses(STEP);
+const SUNNAH = STEP.sunnahVerses.map((v) => v.arabic); // basmala, amin
 
 let passed = 0;
 function test(name, fn) {
@@ -83,12 +84,38 @@ test("a missing word is flagged in its own verse, and not in the others", () => 
 });
 
 test("reciting the whole surah into one verse's check does not make it complete by accident", () => {
-  // verse 2 is "الرحمن الرحيم": the full surah contains it, but with 23 extra words.
-  // Extra words are allowed (we only check that the verse's words are there, in order),
-  // so this documents what the check does and does not catch.
-  const r = checkVerse(STEP.reference, VERSES[1], 1);
-  assert.equal(r.status, COMPLETE, "the verse's own words are present and in order");
+  // verse 2 is "الرحمن الرحيم": the full surah contains it, but with 23 extra words. A tester
+  // recited the whole surah on one verse's screen, left a verse out, and was told "Correct!".
+  const r = checkVerse(STEP.reference, VERSES[1], 1, SUNNAH);
+  assert.equal(r.status, TOO_LONG, "more than the verse on screen was recited");
+  assert.equal(r.complete, true, "compareRecitation's own result is unchanged");
   assert.equal(r.total, 2, "the comparison is scoped to this verse's 2 words, not all 25");
+});
+
+test("the whole surah with one verse left out, on verse 1's screen, is not 'Correct'", () => {
+  const skipped3 = VERSES.filter((_, i) => i !== 2).map((v) => v.arabic).join(" ");
+  assert.equal(checkVerse(skipped3, VERSES[0], 0, SUNNAH).status, TOO_LONG);
+});
+
+test("the basmala before a verse and 'amin' after it are never counted as extra words", () => {
+  const basmala = STEP.sunnahVerses[0].arabic, amin = STEP.sunnahVerses[1].arabic;
+  assert.equal(checkVerse(`${basmala} ${VERSES[0].arabic}`, VERSES[0], 0, SUNNAH).status, COMPLETE);
+  assert.equal(checkVerse(`${VERSES[5].arabic} ${amin}`, VERSES[5], 5, SUNNAH).status, COMPLETE);
+});
+
+test(`up to ${EXTRA_WORDS_ALLOWED} extra words are tolerated (split words, a repeated word)`, () => {
+  const verse = VERSES[3];
+  const w = normalizeArabic(verse.arabic).split(" ");
+  const plusTwo = [...w, w[0], w[1]].join(" ");
+  const plusThree = [...w, w[0], w[1], w[2]].join(" ");
+  assert.equal(checkVerse(plusTwo, verse, 3, SUNNAH).status, COMPLETE);
+  assert.equal(checkVerse(plusThree, verse, 3, SUNNAH).status, TOO_LONG);
+});
+
+test("a too-long verse does not count as passed for the step", () => {
+  const all = VERSES.map((v, i) => checkVerse(v.arabic, v, i, SUNNAH));
+  all[1] = checkVerse(STEP.reference, VERSES[1], 1, SUNNAH);
+  assert.equal(aggregate(all, VERSES.length).allComplete, false);
 });
 
 test("words recited out of order inside a verse are reported as such", () => {
