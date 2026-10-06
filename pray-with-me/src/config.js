@@ -17,6 +17,25 @@ export const POSE_MODEL_URL =
 export const ASR_MODEL_ID = "YunusZJ/whisper-base-ar-quran-ONNX";
 // النموذج العام الاحتياطي: نرجع له لو النموذج المدرّب ما حمّل أو رخصته ما تنفع.
 export const ASR_MODEL_FALLBACK = "Xenova/whisper-base";
+
+// أي نسخة من ملفات النموذج ننزّل (dtype). لازم نحددها بأنفسنا:
+// ⚠️ بدونها، المكتبة تختار "q8" على أي جهاز بدون WebGPU (كل الآيفونات مثلاً)، وملف الـ
+// encoder بنسخة q8 **ما يشتغل أبداً** (خطأ ConvInteger)، فالنموذج يفشل دايماً على هالأجهزة.
+// قسناها 2026-10-06 على تلاوة الفاتحة (الآيات الست + آية ناقصة متعمدة) داخل المتصفح:
+//   - الكمبيوتر: النسخة الكاملة fp32 (حوالي 380 ميجا) — نفس اللي كان يشتغل على WebGPU.
+//   - الجوال والتابلت: q4 (حوالي 150 ميجا، أصغر 60٪) — نفس النتيجة على كل الآيات.
+export const ASR_DTYPE_DESKTOP = { encoder_model: "fp32", decoder_model_merged: "fp32" };
+export const ASR_DTYPE_MOBILE = { encoder_model: "q4", decoder_model_merged: "q4" };
+// الحجم التقريبي اللي نكتبه للمستخدم وقت التحميل (بالميجا)
+export const ASR_SIZE_MB = { desktop: 380, mobile: 150 };
+
+// جوال أو تابلت؟ (الآيباد الجديد يقول إنه Mac، فنعرفه من شاشة اللمس)
+export function isMobileDevice(nav = typeof navigator !== "undefined" ? navigator : {}) {
+  const ua = nav.userAgent ?? "";
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (/Macintosh/.test(ua) && (nav.maxTouchPoints ?? 0) > 1);
+}
+export const asrDtype = (nav) => (isMobileDevice(nav) ? ASR_DTYPE_MOBILE : ASR_DTYPE_DESKTOP);
+export const asrSizeMB = (nav) => (isMobileDevice(nav) ? ASR_SIZE_MB.mobile : ASR_SIZE_MB.desktop);
 // إذا تفريغ آية واحدة تجاوز هذا الوقت على جهاز بدون WebGPU، نرجع لـ"اسمع وردّد"
 // تلقائياً بدل ما نخلي المستخدم ينتظر كل آية.
 export const SLOW_TRANSCRIBE_MS = 20000;

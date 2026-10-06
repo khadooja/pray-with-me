@@ -8,7 +8,10 @@
 // throw if anything touches them.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { SPEECH_CHECK_ENABLED, shouldPreloadASR } from "../src/config.js";
+import {
+  SPEECH_CHECK_ENABLED, shouldPreloadASR, isMobileDevice, asrDtype, asrSizeMB,
+  ASR_DTYPE_DESKTOP, ASR_DTYPE_MOBILE, ASR_SIZE_MB,
+} from "../src/config.js";
 import { footerKey, speechChecksKey, speechChecked } from "../src/ui/scope.js";
 import { listenStepHtml, renderListenStep, ready } from "../src/ui/listen-step.js";
 
@@ -198,6 +201,44 @@ test("the README states the same switch value as config.js", () => {
   if (value === "false") {
     assert.ok(/No microphone is requested/i.test(readme), "the README must say no microphone is used");
   }
+});
+
+// ---------- which model files are downloaded (dtype) ----------
+const IPHONE = { userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1", maxTouchPoints: 5 };
+const IPAD_AS_MAC = { userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15", maxTouchPoints: 5 };
+const ANDROID = { userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/128.0 Mobile Safari/537.36", maxTouchPoints: 5 };
+const MAC = { userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/128.0 Safari/537.36", maxTouchPoints: 0 };
+const WINDOWS = { userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128.0 Safari/537.36", maxTouchPoints: 0 };
+
+test("phones and tablets (including an iPad that reports itself as a Mac) get the small q4 files", () => {
+  for (const nav of [IPHONE, IPAD_AS_MAC, ANDROID]) {
+    assert.equal(isMobileDevice(nav), true, nav.userAgent);
+    assert.deepEqual(asrDtype(nav), ASR_DTYPE_MOBILE);
+    assert.equal(asrSizeMB(nav), ASR_SIZE_MB.mobile);
+  }
+});
+
+test("computers keep the full fp32 files", () => {
+  for (const nav of [MAC, WINDOWS]) {
+    assert.equal(isMobileDevice(nav), false, nav.userAgent);
+    assert.deepEqual(asrDtype(nav), ASR_DTYPE_DESKTOP);
+    assert.equal(asrSizeMB(nav), ASR_SIZE_MB.desktop);
+  }
+});
+
+test("no device ever gets the q8/int8/uint8 encoder, which fails to load (ConvInteger)", () => {
+  for (const d of [ASR_DTYPE_DESKTOP, ASR_DTYPE_MOBILE]) {
+    assert.ok(["fp32", "q4"].includes(d.encoder_model), `encoder dtype ${d.encoder_model} was not measured to work`);
+    assert.ok(["fp32", "q4"].includes(d.decoder_model_merged), `decoder dtype ${d.decoder_model_merged} was not measured to work`);
+  }
+});
+
+test("the worker passes the dtype explicitly (the library's wasm default is the broken q8)", () => {
+  assert.match(read("../src/speech/asr.worker.js"), /dtype:\s*asrDtype\(\)/);
+});
+
+test("the loading line shows the size for this device, not a fixed number", () => {
+  assert.ok(en.model_loading.includes("{size}"), "model_loading must keep the {size} placeholder");
 });
 
 console.log(`\n${passed} passed${process.exitCode ? ", some FAILED" : ""}`);

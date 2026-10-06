@@ -11,7 +11,7 @@ import { sunnahVersesCard, ready } from "./step-content.js";
 import { startRecording as realStartRecording, transcribe as realTranscribe } from "../speech/index.js";
 import { recordAttempt as realRecordAttempt } from "../progress/store.js";
 import { checkableVerses, checkVerse, aggregate, COMPLETE, SKIPPED } from "../speech/verse-check.js";
-import { SLOW_TRANSCRIBE_MS } from "../config.js";
+import { SLOW_TRANSCRIBE_MS, asrSizeMB } from "../config.js";
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -126,7 +126,7 @@ export function renderVerseStep(step, root, attemptKey, deps = {}) {
     modelLine.textContent =
       asr.status === "ready" ? t("model_ready")
       : asr.status === "error" ? t("model_error")
-      : `${t("model_loading")} ${asr.pct}%`;
+      : `${t("model_loading", { size: asrSizeMB() })} ${asr.pct}%`;
   };
 
   // أثناء التحميل فقط: الزر معطّل (مو مخفي) ويرجع يشتغل لحاله لما يجهز، وزر "استمر

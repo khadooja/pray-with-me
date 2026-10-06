@@ -129,7 +129,7 @@
   "fallback_mic": "Without the microphone we can't check the recitation, so this step is listen-and-repeat: recite at your own pace, then continue.",
   "fallback_slow": "Checking is too slow on this device, so this step is listen-and-repeat: recite at your own pace, then continue.",
   "fallback_user_choice": "You chose to continue without the recitation check: recite at your own pace, then continue. Nothing is recorded.",
-  "model_loading": "Loading the speech model (about 380 MB, first time only)…",
+  "model_loading": "Loading the speech model (about {size} MB, first time only)…",
   "model_ready": "Speech model ready.",
   "model_error": "The speech model could not be loaded. Check your connection and reload the page.",
   "mic_denied": "Microphone access was blocked. Please allow the microphone in your browser settings, then try again.",

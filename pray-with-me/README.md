@@ -73,7 +73,8 @@ Either way, **pronunciation and tajweed are never assessed** — only whether th
 verse were said, and in order.
 
 The model loads when you reach the first step of the prayer (not when the app opens, and not
-uploaded anywhere — it's a one-way download from Hugging Face; size: about 380 MB). If it fails to
+uploaded anywhere — it's a one-way download from Hugging Face; size: about 380 MB on a computer, about
+150 MB on a phone or tablet — see below). If it fails to
 load, the microphone is refused, **or transcribing a verse takes more than 20 seconds on a
 device without WebGPU** (`SLOW_TRANSCRIBE_MS` in `src/config.js`), the step **falls back to
 listen-and-repeat on its own** with a short note — nothing you say is judged in that case
@@ -88,12 +89,21 @@ deliberately don't copy them here, where they would go stale. The AI teammate ow
 and the model's license (`ASR_MODEL_ID`: Apache-2.0 — see `SOURCES.md`).
 
 **Download, devices and what was tested:**
-- The first load downloads **about 380 MB** (`encoder_model.onnx` 78.6 MB +
-  `decoder_model_merged.onnx` 300.0 MB, fp32) and can take **minutes on a slow connection** —
-  528.8 s was measured once; the cause (connection, device or both) is not confirmed. Later visits
-  use the browser's cache.
-- **Devices with limited memory may not load the model at all** — a tested iPhone failed to load it.
-  Those devices use listen-and-repeat for Al-Fatihah instead (the automatic fallback above).
+- **Which model files load is chosen explicitly** (`ASR_DTYPE_*` in `src/config.js`):
+  - **Computers:** full fp32 files, **about 380 MB** (`encoder_model.onnx` 78.6 MB +
+    `decoder_model_merged.onnx` 300.0 MB).
+  - **Phones and tablets:** q4 files, **about 150 MB** (`encoder_model_q4.onnx` 17.9 MB +
+    `decoder_model_merged_q4.onnx` 133.6 MB) — 60% smaller. On the Al-Fatihah recording (six verses
+    plus one deliberately cut verse) it gave the same result as fp32 for every verse, in Chromium.
+- **Why it is explicit:** without it, the library picks `q8` on every device without WebGPU (all
+  iPhones, for example), and this model's q8 encoder **cannot load at all** (`ConvInteger` is not
+  supported). That — not memory — is why a tested iPhone fell back to listen-and-repeat before
+  2026-10-06. Reproduced in Chromium without WebGPU: before the fix it failed with that error; after
+  it, the model loaded and transcribed a verse correctly, on both the phone and the computer setting.
+- The first load can take **minutes on a slow connection** — 528.8 s was measured once; the cause
+  (connection, device or both) is not confirmed. Later visits use the browser's cache.
+- **Not yet confirmed on a real iPhone** after this fix — that test is still `TODO`. If a device
+  still can't load or run the model, it falls back to listen-and-repeat (the automatic fallback above).
 - The recitation check is verified **only on the desktop browsers the team actually tested**:
   `TODO` (list the browsers and versions).
 
@@ -159,15 +169,18 @@ are downloaded from Hugging Face at runtime and must **never** be committed.
 
 - [Vite 5](https://vitejs.dev/), vanilla JavaScript (ES modules), multi-page build
 - [@mediapipe/tasks-vision](https://www.npmjs.com/package/@mediapipe/tasks-vision) **0.10.14**: PoseLandmarker (lite model)
-- [@huggingface/transformers](https://huggingface.co/docs/transformers.js) v3: Whisper in a Web Worker, using WebGPU when available and wasm otherwise. `ASR_MODEL_ID` is the Quran-tuned `YunusZJ/whisper-base-ar-quran-ONNX` (Apache-2.0; about 380 MB on first load). `ASR_MODEL_FALLBACK` (`Xenova/whisper-base`) is declared in `src/config.js` but not used. The app downloads it once the recitation check is on (it is); if the check is off, only `/labs/speech.html` loads a model
+- [@huggingface/transformers](https://huggingface.co/docs/transformers.js) v3: Whisper in a Web Worker, using WebGPU when available and wasm otherwise. `ASR_MODEL_ID` is the Quran-tuned `YunusZJ/whisper-base-ar-quran-ONNX` (Apache-2.0; about 380 MB on a computer, about 150 MB on a phone — see `ASR_DTYPE_*` in `src/config.js`). `ASR_MODEL_FALLBACK` (`Xenova/whisper-base`) is declared in `src/config.js` but not used. The app downloads it once the recitation check is on (it is); if the check is off, only `/labs/speech.html` loads a model
 - Alignment: a custom LCS word alignment (`src/speech/align.js`), with alternative matchers compared in `src/speech/matchers.js`
 - The step illustrations are SVG generated in code (`src/figure/`), with no image files
 
 ## Next version
 
-- **Smaller quantized model files for phones.** The model repository also has split
-  `decoder_model_uint8` / `decoder_with_past` files; they are **unverified** (not tested for
-  accuracy, speed or loading on phones).
+- **Faster checking in the browser:** the speech model runs on one CPU core today. Serving the site
+  with cross-origin isolation headers lets it use several cores (about 1.7× faster in a Chromium
+  test), but it changes how the camera and model files from other sites are loaded, so it needs
+  its own full test first.
+- **Whisper tiny (Quran):** tested and **not adopted** — faster, but on the same recording it judged
+  only 3 of 6 correctly recited verses complete.
 - **Speech check for the other adhkar** (today only Al-Fatihah is checked).
 
 ## Project layout

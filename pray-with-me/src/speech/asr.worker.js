@@ -4,13 +4,16 @@
 // In:  { type: "load", modelId } | { type: "transcribe", audio: Float32Array (16 kHz mono), modelId }
 // Out: { type: "progress", data } | { type: "ready" } | { type: "result", text } | { type: "error", message }
 import { pipeline } from "@huggingface/transformers";
+import { asrDtype } from "../config.js";
 
 let current = { modelId: null, device: null, promise: null };
 
 const progress_callback = (data) => self.postMessage({ type: "progress", data });
 
+// dtype explicit on purpose: the library's own default on wasm is q8, whose encoder fails to
+// load (ConvInteger unsupported). See ASR_DTYPE_* in config.js.
 function create(modelId, device) {
-  return pipeline("automatic-speech-recognition", modelId, { device, progress_callback });
+  return pipeline("automatic-speech-recognition", modelId, { device, dtype: asrDtype(), progress_callback });
 }
 
 async function getPipeline(modelId) {

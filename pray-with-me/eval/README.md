@@ -51,6 +51,24 @@ metadata and by the AI teammate). The cause of the 528.8 s load above is not con
 device, or both). `ASR_MODEL_FALLBACK` (`Xenova/whisper-base`) is declared in `src/config.js` but
 not used.
 
+### Model file variants (dtype), 2026-10-06
+
+Measured on `public/audio/fatiha.mp3` (one professional recitation), split at the pauses: six
+verses each compared with `compareRecitation` against that verse, plus one deliberate omission
+(only the first half of verse 6). Run in headless Chromium on the wasm backend (single thread, a
+cloud server's CPU — **phone timings will differ**). Load time is from local files, without download.
+
+| Model / files | Size | Correct verses judged complete | Omission caught | Avg per verse | Longest verse | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| base-ar-quran, library default on wasm (`q8`) | — | — | — | — | — | **fails to load**: `ConvInteger` unsupported (this broke every device without WebGPU) |
+| base-ar-quran fp32 (computers) | ~380 MB | 6/6 | yes | 7.2 s | 8.9 s | |
+| base-ar-quran q4 + q4 (phones) | ~150 MB | 6/6 | yes | 11.2 s | 17.2 s | same transcripts as fp32 |
+| whisper-tiny-ar-quran fp32 (`Sharjeelbaig/whisper-tiny-ar-quran-onnx`) | ~145 MB | **3/6** | yes | 4.1 s | 5.0 s | not adopted: false "missing" words |
+
+With cross-origin isolation (multi-threaded wasm, 2 threads) the same base fp32 took 4.2 s per
+verse and q4 6.7 s — not enabled in the app yet (see README, "Next version").
+Only one reciter and one clean recording: these show direction, not accuracy.
+
 ## 2. Pose: posture rules
 
 Short clips with the camera to the side, about 2 m away, filmed in correct and incorrect postures.
