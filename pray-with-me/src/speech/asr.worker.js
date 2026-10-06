@@ -6,6 +6,12 @@
 import { pipeline } from "@huggingface/transformers";
 import { asrDtype } from "../config.js";
 
+// Hugging Face answers 404 (no CORS headers → "Failed to fetch") to any request whose Referer is a
+// *.workers.dev address — which is where the app is deployed — so the model never loaded on the
+// live site. Every fetch from this worker (model files only) goes out without a Referer.
+const baseFetch = self.fetch.bind(self);
+self.fetch = (input, init = {}) => baseFetch(input, { ...init, referrerPolicy: "no-referrer" });
+
 let current = { modelId: null, device: null, promise: null };
 
 const progress_callback = (data) => self.postMessage({ type: "progress", data });
@@ -16,12 +22,25 @@ function create(modelId, device) {
   return pipeline("automatic-speech-recognition", modelId, { device, dtype: asrDtype(), progress_callback });
 }
 
+// "gpu" in navigator only says the browser knows WebGPU, not that this device can use it. Asking
+// for an adapter first avoids starting on WebGPU when there is none: once onnxruntime has tried
+// WebGPU and failed, the wasm retry below can fail too ("no available backend found").
+async function preferredDevice() {
+  if (!("gpu" in navigator)) return "wasm";
+  try {
+    return (await navigator.gpu.requestAdapter()) ? "webgpu" : "wasm";
+  } catch {
+    return "wasm";
+  }
+}
+
 async function getPipeline(modelId) {
   if (current.modelId === modelId && current.promise) return current.promise;
 
-  const preferred = "gpu" in navigator ? "webgpu" : "wasm";
-  current = { modelId, device: preferred, promise: null };
+  current = { modelId, device: null, promise: null };
   current.promise = (async () => {
+    const preferred = await preferredDevice();
+    current.device = preferred;
     try {
       return await create(modelId, preferred);
     } catch (err) {

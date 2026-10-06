@@ -237,6 +237,14 @@ test("the worker passes the dtype explicitly (the library's wasm default is the 
   assert.match(read("../src/speech/asr.worker.js"), /dtype:\s*asrDtype\(\)/);
 });
 
+test("the worker downloads the model without a Referer (Hugging Face 404s *.workers.dev referers)", () => {
+  assert.match(read("../src/speech/asr.worker.js"), /referrerPolicy:\s*"no-referrer"/);
+});
+
+test("the worker only picks WebGPU when the device actually gives it an adapter", () => {
+  assert.match(read("../src/speech/asr.worker.js"), /navigator\.gpu\.requestAdapter\(\)/);
+});
+
 test("the loading line shows the size for this device, not a fixed number", () => {
   assert.ok(en.model_loading.includes("{size}"), "model_loading must keep the {size} placeholder");
 });

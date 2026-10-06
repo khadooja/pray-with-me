@@ -100,6 +100,13 @@ and the model's license (`ASR_MODEL_ID`: Apache-2.0 — see `SOURCES.md`).
   supported). That — not memory — is why a tested iPhone fell back to listen-and-repeat before
   2026-10-06. Reproduced in Chromium without WebGPU: before the fix it failed with that error; after
   it, the model loaded and transcribed a verse correctly, on both the phone and the computer setting.
+- **Why the model never loaded on the live site before 2026-10-06:** Hugging Face answers 404,
+  without CORS headers, to any request whose Referer is a `*.workers.dev` address (where the app is
+  deployed), so the browser reported "Failed to fetch" on every device. The speech worker now
+  downloads without a Referer. It also asks for a WebGPU adapter before choosing WebGPU, so a
+  browser that knows WebGPU but has no usable GPU goes straight to wasm. Both checked in Chromium
+  with the app served under the real site address: the model loaded and a verse was transcribed
+  correctly with the computer and the phone setting.
 - The first load can take **minutes on a slow connection** — 528.8 s was measured once; the cause
   (connection, device or both) is not confirmed. Later visits use the browser's cache.
 - **Not yet confirmed on a real iPhone** after this fix — that test is still `TODO`. If a device
