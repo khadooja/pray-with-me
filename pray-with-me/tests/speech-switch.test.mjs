@@ -38,6 +38,33 @@ test("no Whisper model is downloaded while the check is off", () => {
   assert.equal(shouldPreloadASR(), false, "the app must not fetch the speech model");
 });
 
+test("the model is only ever loaded from one decision point, reached at step 1", () => {
+  const main = read("../src/main.js");
+  // preloadASR is called from exactly one place, behind shouldPreloadASR()
+  assert.equal((main.match(/\bpreloadASR\(/g) || []).length, 1, "exactly one call site");
+  assert.ok(/function ensureAsrPreload\(\)[\s\S]*?shouldPreloadASR\(\)/.test(main),
+    "the switch must gate the preload");
+  assert.ok(/if \(current === 0\) ensureAsrPreload\(\);/.test(main),
+    "loading starts when the user reaches the first journey step, not at app load");
+  assert.ok(!/^if \(shouldPreloadASR\(\)\) startAsrPreload\(\);/m.test(main),
+    "it must not run at module scope any more");
+});
+
+test("the verse check is only reachable while the switch is on", () => {
+  const main = read("../src/main.js");
+  assert.ok(/SPEECH_CHECK_ENABLED\s*\n?\s*\?\s*startVerseCheck/.test(main),
+    "the verse-by-verse step sits on the true branch");
+  assert.ok(/:\s*renderListenStep/.test(main), "and listen-and-repeat on the false branch");
+});
+
+test("the listen-and-repeat step still has no way to reach the microphone or the model", () => {
+  // the fallback view is what runs while the switch is off, and after any fallback
+  const src = read("../src/ui/listen-step.js");
+  const imports = [...src.matchAll(/^\s*import\s[^;]*?from\s+["']([^"']+)["']/gm)].map((m) => m[1]);
+  assert.ok(!imports.some((i) => i.includes("speech")), `unexpected speech import: ${imports.join(", ")}`);
+  assert.ok(!imports.some((i) => i.includes("progress")), "it must not record attempts either");
+});
+
 // ---------- the listen-and-repeat step ----------
 // A fake DOM just big enough to render into, with the microphone and Worker booby-trapped.
 function sandbox(run) {
@@ -142,7 +169,13 @@ test("the scope text says recitation is not checked while the switch is off", ()
 test("the scope text claims the check only when the switch is on", () => {
   assert.equal(footerKey(true), "footer");
   assert.equal(speechChecksKey(true), "checks_speech_on");
-  assert.ok(/Al-Fatihah/i.test(en.checks_speech_on), "the on wording should name what is checked");
+  // the check is per verse, and it is word completeness + order only — never pronunciation
+  for (const text of [en.checks_speech_on, en.footer]) {
+    assert.ok(/verse/i.test(text), `the on wording must say the check is per verse: "${text}"`);
+    assert.ok(/order/i.test(text), "and that it is about word order");
+    assert.ok(/not checked:|does not assess/i.test(text), "and must state what it does NOT check");
+    assert.ok(/pronunciation|tajweed/i.test(text), "pronunciation and tajweed are explicitly excluded");
+  }
 });
 
 test("the live wording matches the live switch", () => {

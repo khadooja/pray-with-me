@@ -11,9 +11,15 @@ export const MEDIAPIPE_WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks
 export const POSE_MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
 
-// The AI teammate may swap in a Quran-tuned ONNX Whisper model here
-// (it must be a transformers.js-compatible ONNX export on Hugging Face).
-export const ASR_MODEL_ID = "Xenova/whisper-base";
+// نموذج التفريغ. لازم يكون تصدير ONNX متوافق مع transformers.js على Hugging Face.
+// ⚠️ نموذج مدرّب على القرآن، و**رخصته TODO** لحد ما ترهف تتأكد منها وتسجّلها في SOURCES.md.
+// ما يُنزَّل إلا إذا كان SPEECH_CHECK_ENABLED = true (أو من مختبر التلاوة).
+export const ASR_MODEL_ID = "YunusZJ/whisper-base-ar-quran-ONNX";
+// النموذج العام الاحتياطي: نرجع له لو النموذج المدرّب ما حمّل أو رخصته ما تنفع.
+export const ASR_MODEL_FALLBACK = "Xenova/whisper-base";
+// إذا تفريغ آية واحدة تجاوز هذا الوقت على جهاز بدون WebGPU، نرجع لـ"اسمع وردّد"
+// تلقائياً بدل ما نخلي المستخدم ينتظر كل آية.
+export const SLOW_TRANSCRIBE_MS = 20000;
 // How many seconds the user must hold a correct pose before the step counts as done.
 export const POSE_HOLD_SECONDS = 2;
 
@@ -34,7 +40,7 @@ export const HELP_CONTACT_URL = "TODO";
 
 // هل نفحص تلاوة الفاتحة؟
 // ⚠️ **مطفأة حالياً**: التقييم (npm run eval:speech) بيّن إن المطابقة الحالية تطلّع
-// تنبيهات كثيرة بأن كلمات "ناقصة" وهي مقروءة فعلاً (٨ كلمات على تلاوة صحيحة كاملة).
+// تنبيهات كثيرة بأن كلمات "ناقصة" وهي مقروءة فعلاً. شغّلي الأمر تشوفين الأرقام الحالية.
 // تنبيه خاطئ للمبتدئ أسوأ من عدم الفحص، فأطفأناها لاختبار المستخدمين.
 // رهف هي اللي ترجّع تشغيلها، بعد ما تتحسّن أرقام التقييم على تسجيلات حقيقية كافية.
 // وهي مطفأة: خطوة الفاتحة تصير "اسمع وردّد" بدون مايك ولا حكم ولا تحميل نموذج.

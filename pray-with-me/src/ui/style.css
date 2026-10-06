@@ -536,6 +536,16 @@ h1 + .level { margin: 0 0 12px; }
 .transition-note .arabic { font-size: 1.25rem; }
 .transition-instruction { color: var(--muted); font-size: 0.85rem; }
 
+/* ---------- خطوة الفاتحة: آية آية ---------- */
+/* الآية الحالية وحدها على الشاشة، وعربيّها أكبر من بقية النصوص */
+.verse-card .arabic { font-size: 1.45rem; line-height: 2; margin-bottom: 8px; }
+.verse-card .label { margin-bottom: 10px; }
+/* الكلمات اللي ما سمعها النموذج، داخل سطر الملاحظة */
+.feedback .missing { font-size: 1.15rem; }
+/* زر "الآية اللي بعدها": يظهر بعد أول نتيجة، فوق رابط التخطّي */
+#next { margin-top: 10px; }
+#skip { display: block; margin: 12px auto 0; }
+
 /* ---------- آيات الفاتحة، كل آية بسطرها ---------- */
 .verses {
   margin: 0;

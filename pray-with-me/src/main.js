@@ -10,7 +10,7 @@ import { reviewSteps, occurrenceOf } from "./progress/review.js";
 import { resolveJourney, journeyAttemptKeys, journeyRakahs, rakahCount, journeyTransitions } from "./content/journey.js";
 import { evaluatePose, resetPoseMock } from "./pose/index.js";
 import { startCamera, stopCamera, runPoseLoop, shouldMirror } from "./pose/detector.js";
-import { preloadASR, startRecording, transcribe, compareRecitation } from "./speech/index.js";
+import { preloadASR, startRecording, transcribe } from "./speech/index.js";
 import { unlockAudio, playSuccess, playHint, vibrateSuccess } from "./ui/sound.js";
 import { renderSetup } from "./ui/setup.js";
 import { videoCard, setupVideo } from "./ui/video.js";
@@ -18,8 +18,8 @@ import { figureCard, diagramCard, setupFigure } from "./figure/figure.js";
 import { showSuccessSheet, showConfirmSheet, dismissSheet } from "./ui/sheet.js";
 import { showHelpSheet } from "./ui/help.js";
 import { renderListenStep } from "./ui/listen-step.js";
-import { ready, levelBadge, instructionLine, transitionNote, sourceLinks, versesList, sunnahVersesCard }
-  from "./ui/step-content.js";
+import { renderVerseStep } from "./ui/verse-step.js";
+import { ready, levelBadge, instructionLine, transitionNote, sourceLinks } from "./ui/step-content.js";
 import { footerKey, speechChecksKey } from "./ui/scope.js";
 import { renderPreparation } from "./ui/preparation.js";
 
@@ -71,6 +71,8 @@ function go(i) {
   cleanup = null;
   current = Math.max(0, Math.min(i, steps.length));
   window.scrollTo(0, 0);
+  // أول خطوة فعلية في الرحلة = الوقت اللي نبدأ فيه تحميل نموذج الكلام
+  if (current === 0) ensureAsrPreload();
   // قبل أول خطوة: تجهيز الكاميرا، ثم "قبل أن تصلي"
   if (current === 0 && !setupSeen) showSetup(0, null);
   else if (current === 0 && PREPARATION_SCREEN_ENABLED && !prepSeen) showPreparation();
@@ -259,7 +261,7 @@ function renderStep(step) {
   else if (step.type === "speech") {
     // فحص التلاوة مطفأ؟ "اسمع وردّد": بدون مايك ولا حكم ولا تسجيل محاولة
     stepCleanup = SPEECH_CHECK_ENABLED
-      ? renderSpeech(step, practice, attemptKey)
+      ? startVerseCheck(step, practice, attemptKey)
       : renderListenStep(step, practice, () => go(current + 1));
   }
   cleanup = () => {
@@ -454,119 +456,51 @@ function renderPose(step, root, attemptKey) {
   };
 }
 
-// ---------- speech step ----------
+// ---------- speech step: Al-Fatihah, verse by verse ----------
+// الفحص آية آية في src/ui/verse-step.js، والمقارنة من align.js كما هي.
+// هنا نربطه بالرحلة فقط: شاشة النجاح، والرجوع لـ"اسمع وردّد" إذا تعذّر الفحص.
 
-function renderSpeech(step, root, attemptKey) {
-  root.innerHTML = `
-    <section class="card">
-      <p class="label">${esc(t("recite_this"))}</p>
-      ${
-        step.verses?.length
-          ? versesList(step.verses)
-          : `<p class="arabic reference" dir="rtl" lang="ar">${esc(step.reference)}</p>`
-      }
-    </section>
-    ${sunnahVersesCard(step.sunnahVerses)}
-    <p class="status" id="model"></p>
-    <button class="btn" id="rec">${esc(t("start_reciting"))}</button>
-    <p class="feedback" id="fb"></p>`;
+function startVerseCheck(step, root, attemptKey) {
+  ensureAsrPreload(); // جاي من "تدرّب مرة ثانية" مباشرة للفاتحة؟ نبدأ التحميل الآن
+  let cleanup = null;
 
-  const btn = root.querySelector("#rec");
-  const modelLine = root.querySelector("#model");
-  const fb = root.querySelector("#fb");
-  let recording = null;
-  let disposed = false;
-
-  const setFeedback = (html, kind = "") => {
-    fb.innerHTML = html;
-    fb.className = `feedback ${kind}`;
+  // الرجوع لـ"اسمع وردّد" مع سطر يشرح السبب. ما نحجز المستخدم أبداً.
+  const toListenAndRepeat = (reasonKey) => {
+    cleanup = renderListenStep(step, root, () => go(current + 1));
+    const note = has(reasonKey) ? t(reasonKey) : "";
+    if (note) root.insertAdjacentHTML("afterbegin", `<p class="feedback warn">${esc(note)}</p>`);
   };
 
-  // The model is already loading in the background (startAsrPreload); just show its state.
-  const showModel = () => {
-    modelLine.textContent =
-      asr.status === "ready" ? t("model_ready")
-      : asr.status === "error" ? t("model_error")
-      : `${t("model_loading")} ${asr.pct}%`;
-  };
-  if (!USE_MOCK) {
-    showModel();
-    asr.listeners.add(showModel);
-  }
+  cleanup = renderVerseStep(step, root, attemptKey, {
+    asr,
+    mock: USE_MOCK,
+    speech: { startRecording, transcribe },
+    recordAttempt,
+    onRecordStart: () => currentVideo?.pause(), // صوت المُعلِّم ما يوصل للمايك
+    onFinished: (allComplete) => {
+      // شاشة النجاح تطلع فقط إذا كل الآيات اكتملت
+      if (allComplete) celebrate(step.id);
+    },
+    onFallback: (reasonKey) => toListenAndRepeat(reasonKey),
+  });
 
-  // Mock: pretend the user forgot the last two words.
-  const mockText = step.reference.split(" ").slice(0, -2).join(" ");
-
-  btn.onclick = async () => {
-    if (!recording) {
-      currentVideo?.pause(); // the demonstrator's voice must not reach the microphone
-      btn.disabled = true;
-      try {
-        recording = await startRecording();
-        btn.disabled = false;
-        if (disposed) return recording.stop().catch(() => {});
-        btn.textContent = t("done_reciting");
-        btn.classList.add("recording");
-        setFeedback(esc(t("listening")));
-      } catch (err) {
-        console.error(err);
-        recording = null;
-        btn.disabled = false;
-        setFeedback(esc(t(err?.name === "NotAllowedError" ? "mic_denied" : "mic_error")), "warn");
-      }
-      return;
-    }
-
-    const rec = recording;
-    recording = null;
-    btn.disabled = true;
-    btn.classList.remove("recording");
-    setFeedback(esc(t("checking")));
-    try {
-      const audio = await rec.stop();
-      const text = await transcribe(audio, mockText);
-      // A successful transcription means the model loaded (e.g. after an earlier error).
-      if (!USE_MOCK && asr.status !== "ready") setAsr({ status: "ready" });
-      if (disposed) return;
-      const result = compareRecitation(text, step.reference);
-      recordAttempt(attemptKey, result.complete);
-      if (result.complete) {
-        setFeedback(esc(t("speech_complete")), "ok");
-        celebrate(step.id);
-      } else if (!result.orderOk) {
-        setFeedback(esc(t("speech_order")), "warn");
-      } else {
-        setFeedback(
-          `${esc(t("speech_missing"))} <span class="arabic missing" dir="rtl" lang="ar">${esc(result.missing.join(" "))}</span>`,
-          "warn"
-        );
-      }
-    } catch (err) {
-      console.error(err);
-      if (!disposed) setFeedback(esc(t("mic_error")), "warn");
-    } finally {
-      if (!disposed) {
-        btn.disabled = false;
-        btn.textContent = t("try_again");
-      }
-    }
-  };
-
-  return () => {
-    disposed = true;
-    asr.listeners.delete(showModel);
-    // Leaving mid-recording: stop the mic and drop the audio.
-    recording?.stop().catch(() => {});
-    recording = null;
-  };
+  return () => cleanup?.();
 }
 
 // ---------- speech model preload ----------
-// Starts downloading Whisper as soon as the app opens (not at the speech step),
-// so it is usually ready by the time the user reaches Al-Fatihah.
-// The speech step only reads `asr` and subscribes to changes via asr.listeners.
+// نبدأ تحميل Whisper لما يوصل المستخدم **لأول خطوة في الرحلة** (مو عند فتح التطبيق):
+// شاشة التجهيز وشاشة "قبل أن تصلي" ما تحتاجانه، فما نشغّل الشبكة قبل ما يبدأ فعلاً.
+// وعادة يكون جاهزاً قبل ما يوصل للفاتحة. خطوة الفاتحة تقرأ `asr` وتسمع تغييراته فقط.
 
 const asr = { status: "loading", pct: 0, listeners: new Set() }; // status: loading | ready | error
+let asrPreloadStarted = false;
+
+// آمنة للنداء أكثر من مرة: التحميل يبدأ مرة واحدة فقط.
+function ensureAsrPreload() {
+  if (asrPreloadStarted || !shouldPreloadASR()) return;
+  asrPreloadStarted = true;
+  startAsrPreload();
+}
 
 function setAsr(patch) {
   Object.assign(asr, patch);
@@ -590,5 +524,4 @@ function startAsrPreload() {
     });
 }
 
-if (shouldPreloadASR()) startAsrPreload();
 go(0);

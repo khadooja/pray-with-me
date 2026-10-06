@@ -110,6 +110,11 @@ One optional clip per step, referenced by the `video` field in `fajr.json`.
 | MediaPipe Pose Landmarker Lite model | float16/1 | Apache-2.0 (verify on the model card) | https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker |
 | transformers.js (`@huggingface/transformers`) | ^3 | Apache-2.0 | https://github.com/huggingface/transformers.js |
 | ONNX Runtime Web (dependency of transformers.js) | — | MIT | https://github.com/microsoft/onnxruntime |
-| Whisper base (`Xenova/whisper-base`, from OpenAI Whisper) | — | MIT (verify on the model card) | https://huggingface.co/Xenova/whisper-base |
+| Whisper base (`Xenova/whisper-base`, from OpenAI Whisper) — named fallback (`ASR_MODEL_FALLBACK`), and the lab page's default | — | MIT (verify on the model card) | https://huggingface.co/Xenova/whisper-base |
 | Vite | ^5 | MIT | https://vitejs.dev |
-| Quran-tuned Whisper model (if adopted) | TODO | TODO | TODO |
+| Quran-tuned Whisper (`YunusZJ/whisper-base-ar-quran-ONNX`) — now `ASR_MODEL_ID`, loaded **only** when the recitation check is switched on | TODO | **TODO — must be confirmed before the check is turned on** | TODO |
+
+`SPEECH_CHECK_ENABLED` is `false` in `src/config.js` today, so the Al-Fatihah step is
+listen-and-repeat and **the app downloads no speech model at all**; only `/labs/speech.html` loads
+one. When the switch is turned on, the Quran-tuned model above is what loads — so its license has to
+be confirmed by the AI teammate first.
