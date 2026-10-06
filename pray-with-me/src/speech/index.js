@@ -10,6 +10,8 @@ const progressListeners = new Set();
 const readyWaiters = [];
 let pendingTranscribe = null; // { resolve, reject }
 
+let lastRequestedModelId = null; // for worker.onerror, which gets no modelId of its own
+
 function getWorker() {
   if (worker) return worker;
   worker = new Worker(new URL("./asr.worker.js", import.meta.url), { type: "module" });
@@ -24,6 +26,9 @@ function getWorker() {
       pendingTranscribe = null;
     } else if (msg.type === "error") {
       const err = new Error(msg.message);
+      // debug visibility only (see main.js's ?debug=1 line) — no behavior change
+      if (msg.name) err.name = msg.name;
+      err.modelId = msg.modelId ?? lastRequestedModelId;
       readyWaiters.splice(0).forEach((w) => w.reject(err));
       pendingTranscribe?.reject(err);
       pendingTranscribe = null;
@@ -31,6 +36,7 @@ function getWorker() {
   };
   worker.onerror = (e) => {
     const err = new Error(e.message || "ASR worker failed");
+    err.modelId = lastRequestedModelId;
     readyWaiters.splice(0).forEach((w) => w.reject(err));
     pendingTranscribe?.reject(err);
     pendingTranscribe = null;
@@ -46,6 +52,7 @@ export function preloadASR(onProgress) {
   if (ready) return Promise.resolve();
   return new Promise((resolve, reject) => {
     readyWaiters.push({ resolve, reject });
+    lastRequestedModelId = ASR_MODEL_ID;
     getWorker().postMessage({ type: "load", modelId: ASR_MODEL_ID });
   });
 }
@@ -114,6 +121,7 @@ export function transcribe(audio, mockText = "") {
   if (pendingTranscribe) return Promise.reject(new Error("A transcription is already running"));
   return new Promise((resolve, reject) => {
     pendingTranscribe = { resolve, reject };
+    lastRequestedModelId = ASR_MODEL_ID;
     getWorker().postMessage({ type: "transcribe", audio, modelId: ASR_MODEL_ID }, [audio.buffer]);
   });
 }

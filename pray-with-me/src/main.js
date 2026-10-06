@@ -3,7 +3,7 @@
 // returns a cleanup function that go() calls before showing another step.
 import fajr from "./content/fajr.json";
 import { USE_MOCK, POSE_HOLD_SECONDS, HINT_AFTER_SECONDS, SPEECH_CHECK_ENABLED, shouldPreloadASR,
-  PREPARATION_SCREEN_ENABLED } from "./config.js";
+  PREPARATION_SCREEN_ENABLED, ASR_MODEL_ID } from "./config.js";
 import { t, has } from "./i18n/index.js";
 import { recordAttempt, getAttempts } from "./progress/store.js";
 import { reviewSteps, occurrenceOf } from "./progress/review.js";
@@ -469,6 +469,8 @@ function startVerseCheck(step, root, attemptKey) {
     cleanup = renderListenStep(step, root, () => go(current + 1));
     const note = has(reasonKey) ? t(reasonKey) : "";
     if (note) root.insertAdjacentHTML("afterbegin", `<p class="feedback warn">${esc(note)}</p>`);
+    // ?debug=1 فقط: سطر تشخيصي صغير، ما يظهر أبداً للمستخدم العادي
+    if (isDebug()) root.insertAdjacentHTML("afterbegin", debugLine());
   };
 
   cleanup = renderVerseStep(step, root, attemptKey, {
@@ -492,8 +494,21 @@ function startVerseCheck(step, root, attemptKey) {
 // شاشة التجهيز وشاشة "قبل أن تصلي" ما تحتاجانه، فما نشغّل الشبكة قبل ما يبدأ فعلاً.
 // وعادة يكون جاهزاً قبل ما يوصل للفاتحة. خطوة الفاتحة تقرأ `asr` وتسمع تغييراته فقط.
 
-const asr = { status: "loading", pct: 0, listeners: new Set() }; // status: loading | ready | error
+const asr = { status: "loading", pct: 0, listeners: new Set(), lastError: null }; // status: loading | ready | error
 let asrPreloadStarted = false;
+
+// ?debug=1: سطر تشخيصي صغير تحت ملاحظة الرجوع لـ"اسمع وردّد" — ما يظهر بدونها أبداً.
+const isDebug = () =>
+  typeof location !== "undefined" && new URLSearchParams(location.search).get("debug") === "1";
+
+function debugLine() {
+  const e = asr.lastError;
+  const hasWebGPU = typeof navigator !== "undefined" && "gpu" in navigator;
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  return `<p class="feedback debug" dir="ltr">
+    [debug] model: ${esc(e?.modelId ?? ASR_MODEL_ID)} · error: ${esc(e?.name ?? "")} ${esc(e?.message ?? "")}
+    · WebGPU: ${hasWebGPU ? "yes" : "no"} · UA: ${esc(ua)}</p>`;
+}
 
 // آمنة للنداء أكثر من مرة: التحميل يبدأ مرة واحدة فقط.
 function ensureAsrPreload() {
@@ -519,8 +534,10 @@ function startAsrPreload() {
   })
     .then(() => setAsr({ status: "ready", pct: 100 }))
     .catch((err) => {
-      console.error(err);
-      setAsr({ status: "error" });
+      // الاسم والرسالة ومعرّف النموذج صريحة هنا عشان نشخّص فعلاً (مثل مشكلة الآيفون)،
+      // بدل ما نكتفي بـ Error عام. ما يظهر شيء للمستخدم العادي إلا بـ ?debug=1.
+      console.error("[ASR] model load failed:", err?.modelId ?? ASR_MODEL_ID, err?.name, err?.message);
+      setAsr({ status: "error", lastError: { modelId: err?.modelId ?? ASR_MODEL_ID, name: err?.name, message: err?.message } });
     });
 }
 

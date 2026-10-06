@@ -63,6 +63,13 @@ self.onmessage = async ({ data: msg }) => {
       self.postMessage({ type: "result", text: text.trim() });
     }
   } catch (err) {
-    self.postMessage({ type: "error", message: err?.message ?? String(err) });
+    // name + modelId are included so the main thread can log/show exactly what failed
+    // (debug-only UI; see src/main.js's ?debug=1 handling). No behavior change otherwise.
+    self.postMessage({
+      type: "error",
+      message: err?.message ?? String(err),
+      name: err?.name ?? null,
+      modelId: msg.modelId ?? null,
+    });
   }
 };

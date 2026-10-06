@@ -6,7 +6,7 @@
 // and cleanup. No microphone, no model, no real timers.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { renderVerseStep, verseStepHtml, FALLBACK_MODEL, FALLBACK_MIC, FALLBACK_SLOW }
+import { renderVerseStep, verseStepHtml, FALLBACK_MODEL, FALLBACK_MIC, FALLBACK_SLOW, FALLBACK_USER_CHOICE }
   from "../src/ui/verse-step.js";
 import { normalizeArabic } from "../src/speech/align.js";
 
@@ -67,7 +67,7 @@ function fakeRoot() {
   }
   function parse(html) {
     const nodes = {};
-    for (const id of ["rec", "model", "fb", "skip", "next", "verse-audio"]) {
+    for (const id of ["rec", "model", "fb", "skip", "next", "continue-unchecked", "verse-audio"]) {
       if (html.includes(`id="${id}"`)) nodes[`#${id}`] = el();
     }
     return nodes;
@@ -384,10 +384,83 @@ test("leaving without recording anything records nothing", () => {
 test("the model status line follows asr and unsubscribes on dispose", () => {
   const asr = { status: "loading", pct: 42, listeners: new Set() };
   const s = setup({ asr, speech: { transcripts: allCorrect } });
-  assert.equal(asr.listeners.size, 1, "the step listens while it is on screen");
+  // showModel (the status text) and syncLoadingUI (disable/continue button) both listen
+  assert.equal(asr.listeners.size, 2, "the step listens while it is on screen");
   assert.ok(s.root.querySelector("#model").textContent.includes("42"));
   s.dispose();
   assert.equal(asr.listeners.size, 0, "and stops listening when it leaves");
+});
+
+// ---------------------------------------------------------------- loading race (Phase 2)
+
+test("the record button is disabled while the model is loading, then enables itself", () => {
+  const asr = { status: "loading", pct: 10, listeners: new Set() };
+  const s = setup({ asr });
+  assert.equal(s.root.querySelector("#rec").disabled, true, "disabled while loading");
+  assert.equal(s.root.querySelector("#continue-unchecked").hidden, false, "the escape hatch is visible");
+
+  asr.status = "ready";
+  asr.listeners.forEach((fn) => fn()); // same mechanism main.js's setAsr() uses
+  assert.equal(s.root.querySelector("#rec").disabled, false, "enabled once ready");
+  assert.equal(s.root.querySelector("#continue-unchecked").hidden, true, "hidden again once not loading");
+  s.dispose();
+});
+
+test("an error status leaves the record button enabled, same as before this change", () => {
+  // Phase 2 explicitly keeps the error path as-is: pressing Record falls back immediately.
+  // Only "loading" disables the button; "error" must not.
+  const asr = { status: "error", pct: 0, listeners: new Set() };
+  const s = setup({ asr });
+  assert.equal(s.root.querySelector("#rec").disabled, false, "error is not the loading state");
+  assert.equal(s.root.querySelector("#continue-unchecked").hidden, true, "no extra escape hatch needed here");
+  s.dispose();
+});
+
+test('"Continue without checking" goes to the fallback and records no attempt', () => {
+  const asr = { status: "loading", pct: 0, listeners: new Set() };
+  const s = setup({ asr });
+  s.root.querySelector("#continue-unchecked").onclick();
+  assert.deepEqual(s.fallbacks, [FALLBACK_USER_CHOICE]);
+  assert.deepEqual(s.attempts, [], "choosing to skip the check must not count as an attempt");
+});
+
+test("a stale transcription that resolves after the user moved on changes nothing", async () => {
+  const root = fakeRoot();
+  const clock = fakeClock();
+  let resolveTranscribe;
+  const pending = new Promise((r) => { resolveTranscribe = r; });
+  const speech = {
+    startRecording: async () => ({ stop: async () => new Float32Array(0) }),
+    transcribe: async () => pending, // never resolves until we say so
+  };
+  const attempts = [];
+  const finished = [];
+  const dispose = renderVerseStep(STEP, root, "fatiha#1", {
+    speech,
+    recordAttempt: (k, ok) => attempts.push([k, ok]),
+    onFinished: (ok, s2) => finished.push([ok, s2]),
+    onFallback: () => {},
+    now: clock.now, setTimer: clock.setTimer, clearTimer: clock.clearTimer,
+    hasWebGPU: true, slowMs: 20000, asr: null,
+  });
+
+  await root.querySelector("#rec").onclick(); // record verse 1
+  const stale = root.querySelector("#rec").onclick(); // "Done" -> awaits the pending transcribe
+
+  // before that resolves, the user skips ahead to verse 2
+  await root.querySelector("#skip").onclick();
+  assert.ok(root.innerHTML.includes("Verse 2 of"), "moved on to the next verse");
+  const verse2Fb = root.querySelector("#fb");
+  const verse2Rec = root.querySelector("#rec");
+
+  // now the old verse's transcription finally comes back
+  resolveTranscribe(verseText(0));
+  await stale;
+
+  assert.equal(verse2Fb.innerHTML, "", "the stale result must not write into the current verse's feedback");
+  assert.equal(verse2Rec.disabled, false, "and must not leave the current verse's button disabled");
+  assert.equal(finished.length, 0, "the step has not finished");
+  dispose();
 });
 
 await runAll();
