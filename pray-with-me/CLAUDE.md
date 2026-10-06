@@ -9,7 +9,7 @@ is no backend, no API keys and no database. It deploys as static files on Cloudf
 
 ## Commands
 - `npm install`, `npm run dev` (http://localhost:5173), `npm run build`, `npm run preview`
-- `npm test` runs every file in `tests/` (10 suites, plain Node with `node:assert`, no framework)
+- `npm test` runs every file in `tests/` (12 suites, plain Node with `node:assert`, no framework)
 - `node scripts/build-content.mjs` regenerates `src/content/fajr.json` and `SOURCES.md` from the content
   documents. `npm run eval:speech` prints the speech-matcher comparison.
 - `/?mock=1` gives mock pose and speech with no camera, mic or models. Labs: `/labs/pose.html`,

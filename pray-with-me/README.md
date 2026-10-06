@@ -1,5 +1,7 @@
 # Pray With Me | صَلِّ معي
 
+**Live demo:** <https://pray-with-me.khadijaalamoudi169.workers.dev>
+
 A web app that helps a **new Muslim learn the Fajr prayer step by step**, with real-time feedback:
 
 - **Posture feedback** through the device camera (on-device pose estimation with MediaPipe).
@@ -70,10 +72,12 @@ currently **`true`**.
 Either way, **pronunciation and tajweed are never assessed** — only whether the words of the
 verse were said, and in order.
 
-The model loads when you reach the first step of the prayer (not when the app opens), and if it
-fails to load, the microphone is refused, or checking turns out too slow on the device, the step
-**falls back to listen-and-repeat on its own** with a short note — nothing you say is judged in
-that case either, and the journey is never blocked.
+The model loads when you reach the first step of the prayer (not when the app opens, and not
+uploaded anywhere — it's a one-way download from Hugging Face; size: `TODO`). If it fails to
+load, the microphone is refused, **or transcribing a verse takes more than 20 seconds on a
+device without WebGPU** (`SLOW_TRANSCRIBE_MS` in `src/config.js`), the step **falls back to
+listen-and-repeat on its own** with a short note — nothing you say is judged in that case
+either, and the journey is never blocked.
 
 The switch was off for a while because `npm run eval:speech` showed the whole-surah matcher
 reporting several words as "missing" on a recitation that was in fact complete — the speech
@@ -110,7 +114,7 @@ npm install
 npm run dev        # http://localhost:5173/
 npm run build      # static output in dist/
 npm run preview    # serve dist/ locally
-npm test           # the whole suite: 10 files in tests/ (plain Node, no framework)
+npm test           # the whole suite: 12 files in tests/ (plain Node, no framework)
 
 node scripts/build-content.mjs   # regenerate src/content/fajr.json and SOURCES.md
 npm run eval:speech              # compare the speech matchers on eval/speech-fixtures.json
@@ -125,22 +129,27 @@ Useful URLs while developing:
 | `/` | The app |
 | `/?mock=1` | Mock mode: fake pose and speech results, with no camera, mic or model download. Good for UI work. |
 | `/labs/pose.html` | Pose lab: live angles and rule results, used to tune `src/pose/rules/thresholds.js` |
-| `/labs/speech.html` | Speech lab: model load time, transcription speed and alignment result. The only page that downloads a speech model |
+| `/labs/speech.html` | Speech lab: model load time, transcription speed and alignment result |
 | `/labs/figure.html` | Figure lab: every drawn pose and transition on one page |
 | `/labs/results.html` | User-testing results: this browser's attempts per step, rakah 1 vs rakah 2, and CSV/JSON export |
 
 ## Deployment
 
-Static files on **Cloudflare Pages**: build command `npm run build`, output directory `dist`.
-Cloudflare Pages limits each file to 25 MiB. The onnxruntime `.wasm` file is about 21–22 MB, so
-check `dist/` sizes after upgrading `@huggingface/transformers`. The Whisper model weights are
-downloaded from Hugging Face at runtime and must **never** be committed.
+Static files on **Cloudflare**: build command `npm run build`, output directory `dist`. The
+git repository root is one level **above** this folder (`pray-with-me/`), so the Cloudflare
+project's **root directory is set to `pray-with-me`**. The live deployment's URL is a
+`workers.dev` subdomain.
+Cloudflare limits each deployed file to 25 MiB. The onnxruntime `.wasm` file is about 21–22 MB,
+so check `dist/` sizes after upgrading `@huggingface/transformers`. The Whisper model weights
+are downloaded from Hugging Face at runtime and must **never** be committed.
+
+**Live:** <https://pray-with-me.khadijaalamoudi169.workers.dev>
 
 ## Tech
 
 - [Vite 5](https://vitejs.dev/), vanilla JavaScript (ES modules), multi-page build
 - [@mediapipe/tasks-vision](https://www.npmjs.com/package/@mediapipe/tasks-vision) **0.10.14**: PoseLandmarker (lite model)
-- [@huggingface/transformers](https://huggingface.co/docs/transformers.js) v3: Whisper in a Web Worker, using WebGPU when available and wasm otherwise. `ASR_MODEL_ID` is the Quran-tuned `YunusZJ/whisper-base-ar-quran-ONNX` (**license TODO**, to be confirmed by the AI teammate), with `Xenova/whisper-base` kept as a named fallback. While the recitation check is off, only `/labs/speech.html` loads a model
+- [@huggingface/transformers](https://huggingface.co/docs/transformers.js) v3: Whisper in a Web Worker, using WebGPU when available and wasm otherwise. `ASR_MODEL_ID` is the Quran-tuned `YunusZJ/whisper-base-ar-quran-ONNX` (**license TODO**, to be confirmed by the AI teammate; download size also `TODO`), with `Xenova/whisper-base` kept as a named fallback. The app downloads it once the recitation check is on (it is); if the check is off, only `/labs/speech.html` loads a model
 - Alignment: a custom LCS word alignment (`src/speech/align.js`), with alternative matchers compared in `src/speech/matchers.js`
 - The step illustrations are SVG generated in code (`src/figure/`), with no image files
 
@@ -160,6 +169,8 @@ src/main.js, config.js      app shell, settings, switches (system teammate)
 src/progress/               attempts in localStorage, finish-screen review, results maths
 labs/                       tuning, measurement and user-testing pages
 docs/CONTRACTS.md           team guide (Arabic)
+docs/review/                the content owner's Word tables: the source and approval record
+                            for the prayer and preparation-screen content, kept as submitted
 ```
 
 ## Team

@@ -110,11 +110,24 @@ One optional clip per step, referenced by the `video` field in `fajr.json`.
 | MediaPipe Pose Landmarker Lite model | float16/1 | Apache-2.0 (verify on the model card) | https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker |
 | transformers.js (`@huggingface/transformers`) | ^3 | Apache-2.0 | https://github.com/huggingface/transformers.js |
 | ONNX Runtime Web (dependency of transformers.js) | — | MIT | https://github.com/microsoft/onnxruntime |
-| Whisper base (`Xenova/whisper-base`, from OpenAI Whisper) — named fallback (`ASR_MODEL_FALLBACK`), and the lab page's default | — | MIT (verify on the model card) | https://huggingface.co/Xenova/whisper-base |
+| Whisper base (`Xenova/whisper-base`, from OpenAI Whisper) — named fallback (`ASR_MODEL_FALLBACK`), and the lab page's default | TODO (size) | MIT (verify on the model card) | https://huggingface.co/Xenova/whisper-base |
 | Vite | ^5 | MIT | https://vitejs.dev |
-| Quran-tuned Whisper (`YunusZJ/whisper-base-ar-quran-ONNX`) — now `ASR_MODEL_ID`, loaded **only** when the recitation check is switched on | TODO | **TODO — must be confirmed before the check is turned on** | TODO |
+| Quran-tuned Whisper (`YunusZJ/whisper-base-ar-quran-ONNX`) — now `ASR_MODEL_ID`, downloaded whenever the recitation check is on (it is, today) | TODO (size) | **TODO — unconfirmed, and the check is already live with this model** | TODO |
 
-`SPEECH_CHECK_ENABLED` is `false` in `src/config.js` today, so the Al-Fatihah step is
-listen-and-repeat and **the app downloads no speech model at all**; only `/labs/speech.html` loads
-one. When the switch is turned on, the Quran-tuned model above is what loads — so its license has to
-be confirmed by the AI teammate first.
+`SPEECH_CHECK_ENABLED` is `true` in `src/config.js` today: the Al-Fatihah step checks each verse's
+recitation, and the app downloads the Quran-tuned model above the first time the user reaches the
+prayer (size: `TODO`). **Its license is still `TODO`** — this is an open item: the check is live
+with an unconfirmed license, and the AI teammate needs to confirm it (or the app should fall back
+to `ASR_MODEL_FALLBACK` / have the switch turned off) before this goes further. If the switch is
+off, the app downloads no speech model at all; only `/labs/speech.html` loads one.
+
+## Tools used during development
+
+Not shipped in the app — used by the team to build it.
+
+| Tool | Use | Terms |
+| --- | --- | --- |
+| [Claude Code](https://claude.com/claude-code) (Anthropic) | AI coding assistant | TODO |
+| [Google Translate](https://translate.google.com/) | Help wording the taslim transliteration ([11] above), reviewed by the team lead | TODO |
+| Cloudflare | Hosting the live deployment (`pray-with-me.khadijaalamoudi169.workers.dev`) | TODO |
+| GitHub | Source hosting, version control | TODO |

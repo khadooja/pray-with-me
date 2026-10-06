@@ -10,7 +10,7 @@
 ```bash
 npm install
 npm run dev                      # افتحي http://localhost:5173/
-npm test                         # كل الاختبارات (١٠ ملفات في tests/، Node عادي بدون أي framework)
+npm test                         # كل الاختبارات (١٢ ملف في tests/، Node عادي بدون أي framework)
 npm run build                    # لازم ينجح قبل أي دمج
 node scripts/build-content.mjs   # يعيد توليد fajr.json و SOURCES.md من ملفات المحتوى
 ```

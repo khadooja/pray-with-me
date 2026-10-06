@@ -42,6 +42,11 @@ Use `/labs/pose.html` to read the angles and the result.
 Testers try each step. We note whether it succeeded on the 1st attempt and by the 3rd attempt.
 Anonymous IDs only.
 
+For a real tester session, `/labs/results.html` now does most of this automatically: it reads
+that browser's own attempts per journey position, shows rakah 1 vs rakah 2, and exports CSV/JSON
+tagged with a Tester ID (e.g. `T1`, no names). The table below is still useful for the "what
+confused them" notes the export can't capture.
+
 | Tester | Step | Success on attempt 1? | Success by attempt 3? | What confused them |
 | --- | --- | --- | --- | --- |
 | U01 | standing | | | |
