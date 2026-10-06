@@ -45,7 +45,7 @@
   "footer_no_speech": "This app checks your posture in standing, ruku and sujood only. Your recitation is guided, not checked. It does not assess tajweed or rule on the validity of prayer. Your camera and microphone data never leave your device.",
   "checks_speech_on": "Checked, verse by verse: that every word of the verse was said, in the right order. Not checked: pronunciation or tajweed.",
   "checks_speech_off": "Not checked: your recitation. This step guides you only — recite at your own pace, then continue.",
-  "listen_repeat_hint": "Recite Al-Fatihah aloud at your own pace, then continue.",
+  "listen_repeat_hint": "1) Press ▶ to hear Al-Fatihah. 2) Recite it aloud yourself, at your own pace — the app does not listen. 3) Press \"I've recited it\" to continue.",
   "i_have_recited": "I've recited it",
   "setup_title": "Set up your camera",
   "setup_side": "Place your phone or laptop on the floor, about 2 meters to your SIDE, not in front of you. You keep facing forward as usual.",
