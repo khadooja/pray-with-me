@@ -1,9 +1,11 @@
 // Run: node tests/speech-switch.test.mjs   (or npm test)
 //
-// The Al-Fatihah recitation check sits behind SPEECH_CHECK_ENABLED. With it off the step
-// must be purely guided: no microphone, no model download, no verdict, nothing recorded.
-// These tests prove that by rendering the step with the microphone and Worker replaced by
-// stubs that throw if anything touches them.
+// The Al-Fatihah recitation check sits behind SPEECH_CHECK_ENABLED, currently ON (verse by
+// verse). These tests also pin the OFF-state fallback (listen-and-repeat): it still runs
+// automatically whenever the switch is off, or the model/mic/device can't support the check,
+// and must stay purely guided — no microphone, no model download, no verdict, nothing recorded.
+// They prove that by rendering the step with the microphone and Worker replaced by stubs that
+// throw if anything touches them.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { SPEECH_CHECK_ENABLED, shouldPreloadASR } from "../src/config.js";
@@ -29,13 +31,13 @@ function test(name, fn) {
 }
 
 // ---------- the switch itself ----------
-test("the recitation check is off, so user testing runs without it", () => {
-  assert.equal(SPEECH_CHECK_ENABLED, false,
-    "if this is deliberately turned on, update the README section too");
+test("the recitation check is on: verse-by-verse checking runs for real users", () => {
+  assert.equal(SPEECH_CHECK_ENABLED, true,
+    "if this is deliberately turned off again, update the README section and this test too");
 });
 
-test("no Whisper model is downloaded while the check is off", () => {
-  assert.equal(shouldPreloadASR(), false, "the app must not fetch the speech model");
+test("the speech model preloads once the check is on (outside mock mode)", () => {
+  assert.equal(shouldPreloadASR(), true, "the app must fetch the speech model when the check is live");
 });
 
 test("the model is only ever loaded from one decision point, reached at step 1", () => {

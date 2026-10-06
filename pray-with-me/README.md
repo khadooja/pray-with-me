@@ -3,9 +3,9 @@
 A web app that helps a **new Muslim learn the Fajr prayer step by step**, with real-time feedback:
 
 - **Posture feedback** through the device camera (on-device pose estimation with MediaPipe).
-- **Guided recitation**: Al-Fatihah is listen-and-repeat today. The microphone check (on-device Whisper
-  speech recognition and word alignment) is built but sits behind a switch that is currently **off** —
-  see [Recitation checking is currently OFF](#recitation-checking-is-currently-off).
+- **Recitation feedback**: Al-Fatihah is checked **verse by verse** (on-device Whisper speech
+  recognition and word alignment), behind a switch that is currently **on** —
+  see [Recitation checking is ON — verse by verse](#recitation-checking-is-on--verse-by-verse).
 
 Built for the *AI Challenge Serving Islamic Content* (Bathel Foundation).
 
@@ -15,8 +15,10 @@ Built for the *AI Challenge Serving Islamic Content* (Bathel Foundation).
 There is no backend, no API keys and no database. The only network traffic is downloading the app
 itself and, for the posture check, the MediaPipe pose model from Google storage
 (`storage.googleapis.com`) with the MediaPipe WebAssembly files from `cdn.jsdelivr.net`.
-**The app does not download a speech model at all** while the recitation check is off — only the
-`/labs/speech.html` development page fetches Whisper from Hugging Face. Progress (which steps you
+While the recitation check is on, the app downloads the Quran-tuned Whisper model
+(`ASR_MODEL_ID` in `src/config.js`) the first time you reach the prayer; **if the check is
+switched off, the app downloads no speech model at all** — only the `/labs/speech.html`
+development page fetches one. Progress (which steps you
 completed) is stored only in your browser's `localStorage`. The "Before you pray" screen's wudu item
 links to a YouTube video; the app loads nothing from YouTube — that link only opens, in a
 new tab, if you tap it.
@@ -36,9 +38,10 @@ It **does**:
 
   **Not checked:** hand position (right over left in standing, hands on knees in ruku), and in
   sujood whether your palms, knees, toes, forehead and nose touch the ground.
-- Show **Al-Fatihah verse by verse** with transliteration and meaning, to recite at your own pace.
-  Checking the recitation is built but currently switched off (see the next section); when it is on,
-  it checks each verse on its own — that the verse's words were said, in order, and nothing more.
+- Check **Al-Fatihah verse by verse**: record one verse at a time and be told whether its words
+  were said, in order (see the next section). The check is behind a switch and currently on;
+  if it's off, or the model/mic/device can't support it, the step falls back automatically to
+  listen-and-repeat — the verses shown with transliteration and meaning, recited at your own pace.
 - Remind you of the **six things to get ready** before you start — time, wudu, purity, covering,
   facing the qibla and intention. These are reminders only: the app checks none of them and stores
   no answer.
@@ -49,34 +52,36 @@ It does **NOT**:
 
 It is a practice aid. For religious questions, please ask a qualified scholar.
 
-### Recitation checking is currently OFF
+### Recitation checking is ON — verse by verse
 
 The Al-Fatihah check is behind a switch, `SPEECH_CHECK_ENABLED` in `src/config.js`, and it is
-currently **`false`**.
+currently **`true`**.
 
-- **Off (today):** the Al-Fatihah step is "listen and repeat" — the verses are shown, you recite
-  at your own pace and press a button to continue. **No microphone is requested, no speech model
-  is downloaded, and nothing you say is judged.** The app checks posture only.
-- **On:** the step goes **one verse at a time**. For each verse you see the Arabic, its
+- **On (today):** the step goes **one verse at a time**. For each verse you see the Arabic, its
   transliteration and its meaning, record just that verse, and are told whether every word of
   **that verse** was said in the right order — with "Try this verse again", "Next verse" and
   "Skip this verse", so you are never stuck. The whole step counts as correct only if every
   verse did. Checking one verse at a time keeps a word the model splits or merges from spoiling
   the rest of the surah, and it tells you exactly which verse to repeat.
+- **Off:** the Al-Fatihah step is "listen and repeat" — the verses are shown, you recite
+  at your own pace and press a button to continue. **No microphone is requested, no speech model
+  is downloaded, and nothing you say is judged.** The app checks posture only.
 
 Either way, **pronunciation and tajweed are never assessed** — only whether the words of the
 verse were said, and in order.
 
 The model loads when you reach the first step of the prayer (not when the app opens), and if it
 fails to load, the microphone is refused, or checking turns out too slow on the device, the step
-falls back to listen-and-repeat on its own with a short note. The journey is never blocked.
+**falls back to listen-and-repeat on its own** with a short note — nothing you say is judged in
+that case either, and the journey is never blocked.
 
-It is off because `npm run eval:speech` showed the current matcher reporting **words as "missing" on a
-recitation that was in fact complete** — the speech model splits and merges words, and word-by-word
-matching reads that as an omission. A false accusation is worse for a beginner than no check, so the
-check stays off until the evaluation justifies turning it on. Run that command for the current
-figures; we deliberately don't copy them here, where they would go stale. That decision belongs to
-the AI teammate.
+The switch was off for a while because `npm run eval:speech` showed the whole-surah matcher
+reporting several words as "missing" on a recitation that was in fact complete — the speech
+model splits and merges words, and checking all 25 words at once let one split cascade into
+several false alarms. Checking one verse at a time (2–9 words each) keeps that from cascading,
+which is why the check is on again. Run `npm run eval:speech` for the current figures; we
+deliberately don't copy them here, where they would go stale. The AI teammate owns this decision
+and the model's license (`ASR_MODEL_ID`, currently `TODO` — see `SOURCES.md`).
 
 A test parses `src/config.js` and fails if this section stops matching the actual flag.
 
