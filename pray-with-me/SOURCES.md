@@ -44,4 +44,4 @@ One optional clip per step, referenced by the `video` field in `fajr.json`.
 | ONNX Runtime Web (dependency of transformers.js) | — | MIT | https://github.com/microsoft/onnxruntime |
 | Whisper base (`Xenova/whisper-base`, from OpenAI Whisper) | — | MIT (verify on the model card) | https://huggingface.co/Xenova/whisper-base |
 | Vite | ^5 | MIT | https://vitejs.dev |
-| Quran-tuned Whisper model (if adopted) | TODO | TODO | TODO |
+| Quran-tuned Whisper model | whisper-base-ar-quran-ONNX | Apache-2.0 | https://huggingface.co/YunusZJ/whisper-base-ar-quran-ONNX |
