@@ -73,7 +73,7 @@ Either way, **pronunciation and tajweed are never assessed** — only whether th
 verse were said, and in order.
 
 The model loads when you reach the first step of the prayer (not when the app opens, and not
-uploaded anywhere — it's a one-way download from Hugging Face; size: `TODO`). If it fails to
+uploaded anywhere — it's a one-way download from Hugging Face; size: about 380 MB). If it fails to
 load, the microphone is refused, **or transcribing a verse takes more than 20 seconds on a
 device without WebGPU** (`SLOW_TRANSCRIBE_MS` in `src/config.js`), the step **falls back to
 listen-and-repeat on its own** with a short note — nothing you say is judged in that case
@@ -85,7 +85,17 @@ model splits and merges words, and checking all 25 words at once let one split c
 several false alarms. Checking one verse at a time (2–9 words each) keeps that from cascading,
 which is why the check is on again. Run `npm run eval:speech` for the current figures; we
 deliberately don't copy them here, where they would go stale. The AI teammate owns this decision
-and the model's license (`ASR_MODEL_ID`, currently `TODO` — see `SOURCES.md`).
+and the model's license (`ASR_MODEL_ID`: Apache-2.0 — see `SOURCES.md`).
+
+**Download, devices and what was tested:**
+- The first load downloads **about 380 MB** (`encoder_model.onnx` 78.6 MB +
+  `decoder_model_merged.onnx` 300.0 MB, fp32) and can take **minutes on a slow connection** —
+  528.8 s was measured once; the cause (connection, device or both) is not confirmed. Later visits
+  use the browser's cache.
+- **Devices with limited memory may not load the model at all** — a tested iPhone failed to load it.
+  Those devices use listen-and-repeat for Al-Fatihah instead (the automatic fallback above).
+- The recitation check is verified **only on the desktop browsers the team actually tested**:
+  `TODO` (list the browsers and versions).
 
 A test parses `src/config.js` and fails if this section stops matching the actual flag.
 
@@ -149,9 +159,16 @@ are downloaded from Hugging Face at runtime and must **never** be committed.
 
 - [Vite 5](https://vitejs.dev/), vanilla JavaScript (ES modules), multi-page build
 - [@mediapipe/tasks-vision](https://www.npmjs.com/package/@mediapipe/tasks-vision) **0.10.14**: PoseLandmarker (lite model)
-- [@huggingface/transformers](https://huggingface.co/docs/transformers.js) v3: Whisper in a Web Worker, using WebGPU when available and wasm otherwise. `ASR_MODEL_ID` is the Quran-tuned `YunusZJ/whisper-base-ar-quran-ONNX` (**license TODO**, to be confirmed by the AI teammate; download size also `TODO`), with `Xenova/whisper-base` kept as a named fallback. The app downloads it once the recitation check is on (it is); if the check is off, only `/labs/speech.html` loads a model
+- [@huggingface/transformers](https://huggingface.co/docs/transformers.js) v3: Whisper in a Web Worker, using WebGPU when available and wasm otherwise. `ASR_MODEL_ID` is the Quran-tuned `YunusZJ/whisper-base-ar-quran-ONNX` (Apache-2.0; about 380 MB on first load). `ASR_MODEL_FALLBACK` (`Xenova/whisper-base`) is declared in `src/config.js` but not used. The app downloads it once the recitation check is on (it is); if the check is off, only `/labs/speech.html` loads a model
 - Alignment: a custom LCS word alignment (`src/speech/align.js`), with alternative matchers compared in `src/speech/matchers.js`
 - The step illustrations are SVG generated in code (`src/figure/`), with no image files
+
+## Next version
+
+- **Smaller quantized model files for phones.** The model repository also has split
+  `decoder_model_uint8` / `decoder_with_past` files; they are **unverified** (not tested for
+  accuracy, speed or loading on phones).
+- **Speech check for the other adhkar** (today only Al-Fatihah is checked).
 
 ## Project layout
 

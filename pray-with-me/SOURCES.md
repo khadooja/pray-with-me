@@ -110,14 +110,17 @@ One optional clip per step, referenced by the `video` field in `fajr.json`.
 | MediaPipe Pose Landmarker Lite model | float16/1 | Apache-2.0 (verify on the model card) | https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker |
 | transformers.js (`@huggingface/transformers`) | ^3 | Apache-2.0 | https://github.com/huggingface/transformers.js |
 | ONNX Runtime Web (dependency of transformers.js) | — | MIT | https://github.com/microsoft/onnxruntime |
-| Whisper base (`Xenova/whisper-base`, from OpenAI Whisper) — named fallback (`ASR_MODEL_FALLBACK`), and the lab page's default | TODO (size) | MIT (verify on the model card) | https://huggingface.co/Xenova/whisper-base |
+| Whisper base (`Xenova/whisper-base`, from OpenAI Whisper) — `ASR_MODEL_FALLBACK` in `src/config.js`: **declared but not used** (nothing in the app or the lab pages loads it) | not downloaded | MIT (verify on the model card) | https://huggingface.co/Xenova/whisper-base |
 | Vite | ^5 | MIT | https://vitejs.dev |
-| Quran-tuned Whisper (`YunusZJ/whisper-base-ar-quran-ONNX`) — now `ASR_MODEL_ID`, downloaded whenever the recitation check is on (it is, today) | TODO (size) | **Apache-2.0** (as reported by the AI teammate from the model's Hugging Face page, 2026-10-06) | https://huggingface.co/YunusZJ/whisper-base-ar-quran-ONNX |
+| Quran-tuned Whisper (`YunusZJ/whisper-base-ar-quran-ONNX`) — now `ASR_MODEL_ID`, downloaded whenever the recitation check is on (it is, today) | `encoder_model.onnx` 78.6 MB + `decoder_model_merged.onnx` 300.0 MB ≈ **379 MB** (fp32, default load; measured from the Hugging Face file list, 2026-10-06) | **Apache-2.0** (confirmed from the model's Hugging Face metadata and by the AI teammate, 2026-10-06) | https://huggingface.co/YunusZJ/whisper-base-ar-quran-ONNX |
 
 `SPEECH_CHECK_ENABLED` is `true` in `src/config.js` today: the Al-Fatihah step checks each verse's
 recitation, and the app downloads the Quran-tuned model above the first time the user reaches the
-prayer (download size still `TODO`). **Its license is now confirmed Apache-2.0** (reported by the
-AI teammate from the model's Hugging Face page, 2026-10-06 — see the link in the table above). If the switch is
+prayer (about 379 MB: `encoder_model.onnx` 78.6 MB + `decoder_model_merged.onnx` 300.0 MB, fp32,
+default load; measured from the Hugging Face file list, 2026-10-06). **Its license is confirmed
+Apache-2.0** (from the model's Hugging Face metadata and by the AI teammate, 2026-10-06 — see the
+link in the table above). `ASR_MODEL_FALLBACK` (`Xenova/whisper-base`) is declared in
+`src/config.js` but not used: nothing loads it. If the switch is
 off, the app downloads no speech model at all; only `/labs/speech.html` loads one.
 
 ## Tools used during development

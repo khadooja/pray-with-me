@@ -44,6 +44,13 @@ the AI teammate's device (connection and device: `TODO`). This is a one-time loa
 per-verse transcription time (5.9–10.9 s above) — it is **not** presented as a typical figure for
 all devices/connections.
 
+**Model size and license (2026-10-06):** the app's default (fp32) load of `YunusZJ/whisper-base-ar-quran-ONNX`
+downloads `encoder_model.onnx` 78.6 MB + `decoder_model_merged.onnx` 300.0 MB ≈ **379 MB** (measured
+from the Hugging Face file list). License: **Apache-2.0** (confirmed from the model's Hugging Face
+metadata and by the AI teammate). The cause of the 528.8 s load above is not confirmed (connection,
+device, or both). `ASR_MODEL_FALLBACK` (`Xenova/whisper-base`) is declared in `src/config.js` but
+not used.
+
 ## 2. Pose: posture rules
 
 Short clips with the camera to the side, about 2 m away, filmed in correct and incorrect postures.
