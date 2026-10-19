@@ -12,7 +12,7 @@ export const POSE_MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
 
 // نموذج التفريغ. لازم يكون تصدير ONNX متوافق مع transformers.js على Hugging Face.
-// ⚠️ نموذج مدرّب على القرآن، و**رخصته TODO** لحد ما ترهف تتأكد منها وتسجّلها في SOURCES.md.
+// نموذج مدرّب على القرآن، ورخصته **Apache-2.0** (مؤكَّدة ومسجّلة في SOURCES.md، 2026-10-06).
 // ما يُنزَّل إلا إذا كان SPEECH_CHECK_ENABLED = true (أو من مختبر التلاوة).
 export const ASR_MODEL_ID = "YunusZJ/whisper-base-ar-quran-ONNX";
 // النموذج العام الاحتياطي: نرجع له لو النموذج المدرّب ما حمّل أو رخصته ما تنفع.
