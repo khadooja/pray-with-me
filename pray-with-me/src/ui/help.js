@@ -38,7 +38,7 @@ export function helpBody(step) {
             ${ready(d.audio) ? `<audio class="dhikr-audio" controls preload="none" src="${esc(d.audio)}"></audio>` : ""}
           </section>`
         : ""
-    }`;
+    } <p class="help-human">${esc(t("help_human_note"))}</p>`;
 }
 
 export function showHelpSheet(step, handlers) {
