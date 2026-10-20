@@ -82,7 +82,7 @@ h1 .ar { display: block; font-family: var(--font-ar); font-weight: 400; color: v
 /* لوح المساعدة */
 .help-instruction { margin: 0 0 12px; }
 .help-dhikr { margin-bottom: 4px; }
-.help-human { margin: 12px 0 0; font-size: 0.9em; opacity: 0.85; }
+
 
 /* شاشة النهاية: الخطوات اللي تحتاج تدريب */
 .review-title { font-size: 1.1rem; margin: 24px 0 8px; }
