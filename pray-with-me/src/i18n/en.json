@@ -24,7 +24,6 @@
   "help_replay_figure": "Replay the figure",
   "help_try_again": "Try this step again",
   "help_contact": "Talk to a person",
-    "help_human_note": "This app helps you practise. It cannot give religious rulings or replace a teacher. For questions about your prayer, please ask a qualified scholar or your local mosque. A dedicated referral to an official body is not set up yet; it is planned for a future version.",
   "review_title": "Steps to practice again",
   "review_all_good": "You got every step right the first time. Well done, and may Allah accept from you.",
   "review_nth": "{title} ({x} of {n})",
