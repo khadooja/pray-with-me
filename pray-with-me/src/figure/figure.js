@@ -407,7 +407,10 @@ export function diagramCard(step) {
     </section>`;
 }
 
-export function setupFigure(root) {
+// onPlay: يُستدعى كل ما تبدأ الحركة (أول ما تفتح الخطوة، أو زر الإعادة، أو إعادة الحركة من المساعدة).
+// onSpeed(x): يُستدعى لما يتغير زر السرعة (1 أو 0.75)، عشان الصوت يمشي بنفس السرعة.
+// الاثنين اختياريين: بدونهم يشتغل الشكل كما كان.
+export function setupFigure(root, { onPlay, onSpeed } = {}) {
   const card = root.querySelector(".figure-card");
   if (!card) {
     // الخطوة الحالية ما فيها شكل: الخطوة الجاية تبدأ من وضعيتها مباشرة بدون حركة
@@ -545,6 +548,7 @@ export function setupFigure(root) {
 
   function animate() {
     stopAll();
+    onPlay?.();
     const path = pathBetween(fromName, toName);
     if (path.length < 2 || reducedMotion()) return finish();
 
@@ -569,6 +573,7 @@ export function setupFigure(root) {
   speedBtn.onclick = () => {
     speedIdx = (speedIdx + 1) % VIDEO_SPEEDS.length;
     speedBtn.textContent = t("figure_speed", { x: VIDEO_SPEEDS[speedIdx] });
+    onSpeed?.(VIDEO_SPEEDS[speedIdx]);
   };
 
   animate();

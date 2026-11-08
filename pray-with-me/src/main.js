@@ -44,6 +44,7 @@ const app = document.getElementById("app");
 let current = 0;
 let cleanup = null;
 let currentVideo = null; // demo video controller of the step on screen (see ui/video.js)
+let currentDhikr = null; // صوت الذكر المربوط بحركة الشكل في الخطوة الحالية (انظر dhikrAudioSync)
 
 // The camera setup screen is shown once per visit, before the first pose step.
 // شاشة تجهيز الكاميرا تظهر مرة وحدة في الزيارة (الجوال ما تحرّك، فما نعيد السؤال).
@@ -209,6 +210,28 @@ function mediaFor(step) {
   return video ? video + diagramCard(step) : figureCard(step);
 }
 
+// صوت الذكر يشتغل مع حركة الشكل: أول ما تبدأ الحركة يبدأ الصوت من أوله، وزر الإعادة يعيدهم
+// مع بعض، وزر السرعة (1x / 0.75x) يغيّر سرعة الصوت أيضاً.
+// ⚠️ المتصفحات (خصوصاً الآيفون) تسمح بتشغيل الصوت فقط بعد لمسة من المستخدم. الخطوة تُفتح
+// من ضغطة زر (التالي / أنا جاهز) فغالباً يشتغل تلقائياً، ولو انمنع بصمت فزر "Replay" يشغّله.
+// لما فيه مقطع فيديو حقيقي للخطوة، الصوت يكون مخفي (الفيديو فيه الصوت) فما نشغّله.
+function dhikrAudioSync() {
+  const audio = app.querySelector(".dhikr-audio");
+  return {
+    play() {
+      if (!audio || audio.hidden) return;
+      if (audio.currentTime > 0) audio.currentTime = 0;
+      audio.play()?.catch(() => {}); // انمنع التشغيل التلقائي: ما نسوي شيء، الزر يشغّله
+    },
+    rate(x) {
+      if (audio) audio.playbackRate = x;
+    },
+    pause() {
+      audio?.pause();
+    },
+  };
+}
+
 function renderStep(step) {
   const isLast = current === steps.length - 1;
   app.innerHTML = `
@@ -252,7 +275,10 @@ function renderStep(step) {
   };
 
   // If the video file turns out to be broken, swap the full animated figure in.
-  let figure = setupFigure(app);
+  const dhikr = dhikrAudioSync();
+  currentDhikr = dhikr;
+  const figureHooks = { onPlay: dhikr.play, onSpeed: dhikr.rate };
+  let figure = setupFigure(app, figureHooks);
   const video = setupVideo(app, {
     onError: () => {
       figure.dispose();
@@ -261,7 +287,7 @@ function renderStep(step) {
       // the figure belongs above the dhikr card, in the slot the video just vacated
       const slot = app.querySelector(".dhikr") || app.querySelector("#practice");
       slot?.insertAdjacentHTML("beforebegin", figureCard(step));
-      figure = setupFigure(app);
+      figure = setupFigure(app, figureHooks);
     },
   });
   currentVideo = video;
@@ -286,6 +312,8 @@ function renderStep(step) {
   cleanup = () => {
     video.dispose();
     figure.dispose();
+    dhikr.pause();
+    if (currentDhikr === dhikr) currentDhikr = null;
     if (currentVideo === video) currentVideo = null;
     stepCleanup?.();
   };
@@ -427,6 +455,7 @@ function renderPose(step, root, attemptKey) {
   btn.onclick = async () => {
     unlockAudio(); // must run inside the click, before any await (iOS)
     currentVideo?.pause(); // stop the demo clip when the camera starts
+    currentDhikr?.pause(); // وصوت الذكر أيضاً
     btn.disabled = true;
     started = true;
 
@@ -511,7 +540,10 @@ function startVerseCheck(step, root, attemptKey) {
     mock: USE_MOCK,
     speech: { startRecording, transcribe },
     recordAttempt,
-    onRecordStart: () => currentVideo?.pause(), // صوت المُعلِّم ما يوصل للمايك
+    onRecordStart: () => {
+      currentVideo?.pause(); // صوت المُعلِّم ما يوصل للمايك
+      currentDhikr?.pause();
+    },
     onFinished: (allComplete) => {
       // شاشة النجاح تطلع فقط إذا كل الآيات اكتملت
       if (allComplete) celebrate(step.id);
