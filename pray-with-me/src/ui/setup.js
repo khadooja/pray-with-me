@@ -8,27 +8,35 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 // ===== الرسمة (منظر من فوق) =====
-// - المستطيل الكبير = سجادة الصلاة، والدائرة والبيضاوي = المصلي (رأس وكتفين)
-// - السهم فوق المصلي = اتجاه القبلة (المصلي يواجه للأمام، مو للجوال)
-// - المستطيل الصغير يمين = الجوال على الأرض، على جنب المصلي
-// - الخط المتقطع = المسافة تقريباً مترين
+// كل عنصر له كلمة تسمّيه، عشان ما أحد يخمّن:
+// - المستطيل المقوّس = سجادة الصلاة، والرأس والكتفين فوقها = "أنت"
+// - السهم فوق = الاتجاه اللي تواجهه
+// - المستطيل الصغير يمين = الجوال على الأرض، وعدسته (النقطة) متجهة لك
+// - المثلث الفاتح = اللي تشوفه الكاميرا، والخط المتقطع = المسافة (مترين تقريباً)
 // الألوان من متغيرات CSS في style.css عشان تتغير مع الثيم.
 function illustration() {
+  const label = (x, y, key, fill = "var(--text)") =>
+    `<text x="${x}" y="${y}" text-anchor="middle" font-size="15" font-weight="700" fill="${fill}">${esc(t(key))}</text>`;
   return `
-    <svg class="setup-art" viewBox="0 0 320 200" role="img" aria-label="${esc(t("setup_illustration_alt"))}">
+    <svg class="setup-art" viewBox="0 0 340 220" role="img" aria-label="${esc(t("setup_illustration_alt"))}">
+      <!-- اللي تشوفه الكاميرا -->
+      <polygon points="244,138 128,62 128,214" fill="var(--accent)" opacity="0.12" />
+      <!-- اتجاهك -->
+      ${label(78, 15, "setup_label_facing")}
+      <path d="M78 50 L78 26 M70 34 L78 26 L86 34" stroke="var(--muted)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
       <!-- سجادة الصلاة -->
-      <rect x="40" y="40" width="80" height="140" rx="8" fill="var(--card)" stroke="var(--muted)" stroke-width="2" />
-      <!-- اتجاه القبلة -->
-      <path d="M80 34 L80 12 M72 20 L80 12 L88 20" stroke="var(--muted)" stroke-width="2" fill="none" stroke-linecap="round" />
-      <!-- المصلي: الكتفين ثم الرأس -->
-      <ellipse cx="80" cy="112" rx="30" ry="14" fill="var(--accent)" opacity="0.85" />
-      <circle cx="80" cy="104" r="13" fill="var(--text)" />
-      <!-- المسافة: خط متقطع من المصلي إلى الجوال -->
-      <line x1="114" y1="110" x2="246" y2="110" stroke="var(--warn)" stroke-width="2" stroke-dasharray="6 6" />
-      <text x="180" y="100" text-anchor="middle" fill="var(--warn)" font-size="16" font-weight="700">${esc(t("setup_distance_label"))}</text>
-      <!-- الجوال على الأرض، الشاشة متجهة للمصلي -->
-      <rect x="252" y="86" width="28" height="48" rx="5" fill="var(--bg)" stroke="var(--text)" stroke-width="2" />
-      <circle cx="258" cy="110" r="3" fill="var(--accent)" />
+      <path d="M36 214 L36 78 Q36 56 78 56 Q120 56 120 78 L120 214 Z" fill="var(--card)" stroke="var(--line-strong)" stroke-width="2.5" />
+      <!-- أنت: الكتفين ثم الرأس -->
+      <ellipse cx="78" cy="140" rx="30" ry="14" fill="var(--accent)" />
+      <circle cx="78" cy="131" r="13" fill="var(--text)" />
+      ${label(78, 190, "setup_label_you")}
+      <!-- المسافة -->
+      <line x1="124" y1="138" x2="236" y2="138" stroke="var(--warn)" stroke-width="2.5" stroke-dasharray="7 6" />
+      ${label(180, 128, "setup_distance_label", "var(--warn)")}
+      <!-- الجوال على الأرض، العدسة متجهة لك -->
+      <rect x="244" y="106" width="38" height="64" rx="7" fill="var(--card)" stroke="var(--text)" stroke-width="2.5" />
+      <circle cx="251" cy="138" r="4.5" fill="var(--accent)" />
+      ${label(263, 192, "setup_label_phone")}
     </svg>`;
 }
 
@@ -36,6 +44,7 @@ function illustration() {
 export function renderSetup(root, { onReady, onBack }) {
   root.innerHTML = `
     <h1>${esc(t("setup_title"))}</h1>
+    <p class="setup-intro">${esc(t("setup_intro"))}</p>
     ${illustration()}
     <ol class="setup-list">
       <li>${esc(t("setup_side"))}</li>
@@ -44,10 +53,13 @@ export function renderSetup(root, { onReady, onBack }) {
       <li>${esc(t("setup_sound"))}</li>
     </ol>
     <button class="btn secondary" id="test-sound">${esc(t("test_sound"))}</button>
-    <nav class="nav">
-      <button class="btn secondary" id="setup-back" ${onBack ? "" : "disabled"}>${esc(t("back"))}</button>
-      <button class="btn" id="setup-ready">${esc(t("im_ready"))}</button>
-    </nav>`;
+    <div class="bottom-spacer"></div>
+    <div class="bottom-bar">
+      <div class="bar-actions">
+        <button class="btn secondary" id="setup-back" ${onBack ? "" : "disabled"}>${esc(t("back"))}</button>
+        <button class="btn" id="setup-ready">${esc(t("im_ready"))}</button>
+      </div>
+    </div>`;
 
   root.querySelector("#test-sound").onclick = () => {
     unlockAudio();

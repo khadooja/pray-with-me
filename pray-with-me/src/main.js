@@ -22,6 +22,7 @@ import { renderVerseStep } from "./ui/verse-step.js";
 import { ready, levelBadge, instructionLine, transitionNote, sourceLinks } from "./ui/step-content.js";
 import { footerKey, speechChecksKey } from "./ui/scope.js";
 import { renderPreparation } from "./ui/preparation.js";
+import { renderWelcome } from "./ui/welcome.js";
 
 // The journey is fajr.json's "order" resolved into step definitions.
 // A step that happens more than once (sujood four times, ruku twice, the whole second
@@ -47,6 +48,8 @@ let currentVideo = null; // demo video controller of the step on screen (see ui/
 // The camera setup screen is shown once per visit, before the first pose step.
 // شاشة تجهيز الكاميرا تظهر مرة وحدة في الزيارة (الجوال ما تحرّك، فما نعيد السؤال).
 let setupSeen = false;
+// شاشة الترحيب تظهر مرة وحدة في الزيارة، عند فتح التطبيق. بعدها "ابدأ من جديد" يدخل مباشرة.
+let welcomeSeen = false;
 // شاشة "قبل أن تصلي" تظهر **كل جولة**: الوضوء والنية يستحقون التأكيد من جديد.
 let prepSeen = false;
 // لما يضغط "تدرّب مرة ثانية" من شاشة النهاية: نرجع لها بعد ما يخلص الخطوة
@@ -71,6 +74,8 @@ function go(i) {
   cleanup = null;
   current = Math.max(0, Math.min(i, steps.length));
   window.scrollTo(0, 0);
+  // الترحيب أول شيء، وقبله ما نبدأ أي تحميل (النموذج يبدأ مع أول خطوة فعلية)
+  if (current === 0 && !welcomeSeen) return showWelcome();
   // أول خطوة فعلية في الرحلة = الوقت اللي نبدأ فيه تحميل نموذج الكلام
   if (current === 0) ensureAsrPreload();
   // قبل أول خطوة: تجهيز الكاميرا، ثم "قبل أن تصلي"
@@ -80,13 +85,25 @@ function go(i) {
   else renderStep(steps[current]);
 }
 
+// شاشة الترحيب: ما فيها شريط تقدم ولا زر إغلاق، وما تسجّل شيئاً.
+function showWelcome() {
+  current = 0;
+  app.innerHTML = `${header({ progress: false, close: false })}<section id="welcome"></section>${footer()}`;
+  cleanup = renderWelcome(app.querySelector("#welcome"), {
+    onStart: () => {
+      welcomeSeen = true;
+      go(0);
+    },
+  });
+}
+
 // Setup screen for step i. "I'm ready" opens step i; onBack is where Back goes.
 function showSetup(i, onBack) {
   cleanup?.();
   cleanup = null;
   current = i;
   window.scrollTo(0, 0);
-  app.innerHTML = `${header()}<section id="setup"></section>${footer()}`;
+  app.innerHTML = `${header({ progress: false })}<section id="setup"></section>${footer()}`;
   wireClose();
   renderSetup(app.querySelector("#setup"), {
     onReady: () => {
@@ -206,9 +223,11 @@ function renderStep(step) {
     ${instructionLine(step)}
     ${step.type === "pose" ? `<p class="checks">${esc(t(`checks_${step.check}`))}</p>` : ""}
     ${step.type === "speech" ? `<p class="checks">${esc(t(speechChecksKey()))}</p>` : ""}
-    ${mediaFor(step)}
-    ${dhikrCard(step.dhikr, Boolean(step.video))}
-    <section class="practice" id="practice"></section>
+    <div class="step-grid">
+      ${mediaFor(step)}
+      ${dhikrCard(step.dhikr, Boolean(step.video))}
+      <section class="practice" id="practice"></section>
+    </div>
     ${sourceLinks(step.sourceRefs, fajr.sources)}
     ${footer()}
     <div class="bottom-spacer"></div>
@@ -330,6 +349,7 @@ function renderPose(step, root, attemptKey) {
     <div class="stage" hidden>
       <video playsinline muted></video>
       <canvas></canvas>
+      <span class="stage-badge" id="stage-badge" hidden></span>
     </div>
     <p class="feedback" id="fb"></p>`;
 
@@ -356,6 +376,16 @@ function renderPose(step, root, attemptKey) {
     fb.className = `feedback ${kind}`;
   };
 
+  // إطار الكاميرا: أخضر مزرق لما الوضعية صح، وبرتقالي لما فيها ملاحظة، مع كلمة قصيرة
+  // تنقرأ من بعيد. الملاحظة التفصيلية تبقى في سطر الملاحظات تحت الكاميرا.
+  const badge = root.querySelector("#stage-badge");
+  const setStage = (kind) => {
+    stage.classList.toggle("state-ok", kind === "ok");
+    stage.classList.toggle("state-warn", kind === "warn");
+    badge.hidden = !kind;
+    badge.textContent = kind === "ok" ? t("stage_ok") : kind === "warn" ? t("stage_adjust") : "";
+  };
+
   root.querySelector("#setup-help").onclick = () => {
     leavingForSetup = true;
     showSetup(current, () => go(current));
@@ -368,6 +398,7 @@ function renderPose(step, root, attemptKey) {
     const result = evaluatePose(points, step.check, aspect);
     if (!result.ok) {
       okSince = null;
+      setStage("warn");
       setFeedback(t(result.issues[0]), "warn");
       if (hints < MAX_HINTS && now - lastHintAt >= HINT_AFTER_SECONDS * 1000) {
         playHint();
@@ -379,6 +410,7 @@ function renderPose(step, root, attemptKey) {
     okSince ??= now;
     if (now - okSince >= POSE_HOLD_SECONDS * 1000) {
       done = true;
+      setStage("ok");
       setFeedback(t("pose_done"), "ok");
       playSuccess();
       vibrateSuccess();
@@ -387,6 +419,7 @@ function renderPose(step, root, attemptKey) {
       stopLoop = null;
       celebrate(step.check);
     } else {
+      setStage("ok");
       setFeedback(t("pose_ok"), "ok");
     }
   }

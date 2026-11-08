@@ -13,6 +13,7 @@
   --accent-soft: #e3f3f0;   /* خلفية خفيفة بلون الأساسي */
   --on-accent: #ffffff;     /* النص فوق اللون الأساسي */
   --warn: #b45309;
+  --warn-soft: #fff1de;
   --on-warn: #ffffff;
   --line: #d3e3e0;          /* الحدود الخفيفة */
   --line-strong: #a9c6c1;
@@ -92,7 +93,6 @@ h1 .ar { display: block; font-family: var(--font-ar); font-weight: 400; color: v
 /* لوح المساعدة */
 .help-instruction { margin: 0 0 12px; }
 .help-dhikr { margin-bottom: 4px; }
-
 
 /* شاشة النهاية: الخطوات اللي تحتاج تدريب */
 .review-title { font-size: 1.1rem; margin: 24px 0 8px; }
@@ -298,10 +298,29 @@ audio { width: 100%; margin-top: 8px; }
   width: 100%;
   aspect-ratio: 4 / 3;
   background: #000;
+  border: 5px solid transparent;
   border-radius: var(--radius);
   overflow: hidden;
   margin: 12px 0;
+  transition: border-color 0.2s ease;
 }
+/* حالة الوضعية: إطار ملوّن + كلمة قصيرة فوق الصورة (ما نعتمد على اللون وحده) */
+.stage.state-ok { border-color: var(--accent); }
+.stage.state-warn { border-color: var(--warn); }
+.stage-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+.stage.state-warn .stage-badge { background: var(--warn); color: var(--on-warn); }
 .stage video, .stage canvas {
   position: absolute;
   inset: 0;
@@ -411,10 +430,11 @@ audio { width: 100%; margin-top: 8px; }
 .prep-hint { margin: 8px 0 0; text-align: center; color: var(--muted); font-size: 0.82rem; }
 
 /* Camera setup screen (src/ui/setup.js) */
+.setup-intro { margin: 0 0 4px; color: var(--muted); }
 .setup-art {
   display: block;
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
   height: auto;
   margin: 8px auto 16px;
 }
@@ -434,8 +454,9 @@ audio { width: 100%; margin-top: 8px; }
 }
 
 .feedback { min-height: 1.5em; font-size: 1.1rem; font-weight: 600; }
-.feedback.ok { color: var(--accent); }
-.feedback.warn { color: var(--warn); }
+.feedback.ok, .feedback.warn { padding: 12px 14px; border-radius: var(--radius); }
+.feedback.ok { color: var(--accent-strong); background: var(--accent-soft); }
+.feedback.warn { color: var(--warn); background: var(--warn-soft); }
 .feedback .missing { display: inline-block; font-size: 1.3rem; margin-top: 4px; }
 
 .btn {
@@ -475,10 +496,13 @@ audio { width: 100%; margin-top: 8px; }
   background: var(--card);
   border-top: 1px solid var(--line);
   box-shadow: 0 -4px 14px rgba(16, 36, 43, 0.06);
-  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
 }
 .bottom-bar > .btn { max-width: 720px; margin: 0 auto; display: block; }
-.bottom-spacer { height: 96px; }
+/* شاشة التجهيز: زرّين جنب بعض داخل الشريط الثابت */
+.bar-actions { display: flex; gap: 12px; max-width: 720px; margin: 0 auto; }
+.bar-actions .btn { flex: 1; min-width: 0; }
+.bottom-spacer { height: calc(110px + env(safe-area-inset-bottom)); }
 
 /* Bottom sheets (src/ui/sheet.js): success after a step, and the exit confirm. */
 .sheet-backdrop {
@@ -600,3 +624,61 @@ h1 + .level { margin: 0 0 12px; }
 .footer-credit { display: block; margin-top: 8px; }
 
 [hidden] { display: none !important; }
+
+/* ---------- شاشة الترحيب (src/ui/welcome.js) ---------- */
+.welcome-hero {
+  margin: 8px 0 20px;
+  padding: 36px 20px 28px;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: linear-gradient(180deg, var(--accent-soft) 0%, var(--card) 100%);
+  box-shadow: var(--shadow);
+}
+.welcome-ar { margin: 0; font-family: var(--font-ar); font-size: 3.4rem; line-height: 1.5; color: var(--accent); }
+.welcome-title { margin: 0 0 10px; font-size: 1.9rem; }
+.welcome-tagline { margin: 0 auto; max-width: 30ch; color: var(--muted); font-size: 1.1rem; }
+.welcome-points { list-style: none; margin: 0 0 24px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.welcome-points li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.welcome-icon { flex: none; width: 28px; height: 28px; color: var(--accent); }
+.welcome-start { font-size: 1.15rem; min-height: 58px; }
+
+/* ---------- ترتيب الخطوة: عمود واحد على الجوال، عمودين على الشاشات الكبيرة ---------- */
+.step-grid { display: block; }
+
+@media (min-width: 1000px) {
+  /* الخطوة (فيها .step-grid) تاخذ عرضاً أكبر. بقية الشاشات تبقى بعرضها المريح للقراءة. */
+  #app:has(.step-grid) { max-width: 1120px; }
+  #app:has(.step-grid) h1 { font-size: 2.1rem; display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+  #app:has(.step-grid) h1 .ar { font-size: 2.3rem; }
+  #app:has(.step-grid) .instruction { font-size: 1.15rem; max-width: 60ch; }
+  .step-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 28px;
+    align-items: start;
+  }
+  /* الشكل/الفيديو والذكر على جهة، والتدريب (الكاميرا أو التلاوة) على الجهة الثانية */
+  .step-grid > * { grid-column: 1; }
+  .step-grid > .practice {
+    grid-column: 2;
+    grid-row: 1 / span 6;
+    position: sticky;
+    top: 16px;
+  }
+  /* خطوة بدون تدريب (مثل التكبير): الذكر ياخذ العمود الثاني بدل ما يبقى فاضي */
+  .step-grid:has(.practice:empty) > .practice { display: none; }
+  .step-grid:has(.practice:empty) > .dhikr { grid-column: 2; grid-row: 1; border-radius: var(--radius); }
+  .step-grid:has(.practice:empty) > .figure-card.attached,
+  .step-grid:has(.practice:empty) > .video-card.attached { margin-bottom: 16px; border-radius: var(--radius); }
+  .bottom-bar > .btn { max-width: 420px; }
+}
